@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+
+# Only the scrubbed CSV belongs in the repo. Any other CSV in raw_data/
+# (e.g., a fresh Peloton export) is ignored until run through scrub.py.
+raw_data/*.csv
+!raw_data/peloton_workouts.csv

@@ -1,52 +1,95 @@
 # Peloton Dashboard
 
-A personal training dashboard built from 8 years of Peloton workout history. Follows the [Build a Dashboard with AI](#) Gather → Organize → Visualize pattern.
+A concrete companion example for the forthcoming Technically Curious article
+[Build a Dashboard with AI](https://technicallycurious.substack.com/p/cda35881-34c9-4aa3-94c2-6edf82de4f68).
+
+This repo turns eight years of Peloton workout history into a self-contained HTML
+dashboard. It follows the article's core pattern:
+
+1. **Gather** raw data in one place.
+2. **Organize** it into a clean, auditable data model.
+3. **Visualize** it with a thin display layer.
+
+The important design choice: the dashboard is not a full app. There is no server,
+login, or live database. It is a static HTML file with the data baked in, which is
+the right level of complexity for a personal, single-source dashboard.
 
 ## What this dashboard answers
 
-Two questions, kept honest by separating them:
+Two questions, kept intentionally separate:
 
-1. **How much** — total volume (hours, miles, workouts, training load over time)
-2. **How strong** — power output trends scoped to ride type + duration
+1. **How much** — total volume across hours, miles, workouts, calories, and weekly consistency.
+2. **How strong** — power output trends scoped to comparable ride types and durations.
 
-Plus the headline framing: an unbroken weekly streak going back to 2018.
+The headline story is an unbroken weekly Peloton streak going back to 2018. The
+analysis keeps that volume story separate from performance so a high-mileage
+month does not get mistaken for a stronger riding month.
+
+## How this maps to the article
+
+| Article step | This repo | Why it exists |
+|---|---|---|
+| **Gather** | `raw_data/peloton_workouts.csv` | A scrubbed Peloton CSV export with 4,474 rows. |
+| **Organize** | `organized/organize.py` | Classifies rides, computes monthly volume, builds rolling medians, and writes clean JSON. |
+| **Data model** | `DATA_MODEL.md` | Documents the entities, schema, and calculation boundaries so numbers can be traced. |
+| **Visualize** | `dashboard/dashboard.html` | Reads the generated JSON and renders the finished dashboard with Chart.js. |
+| **Share** | `index.html` + GitHub Pages | Makes the static dashboard viewable at a URL without adding an app backend. |
+
+All calculations belong in `organized/organize.py`. The HTML should mostly
+position charts, render tooltips, and handle display behavior. If a number is
+wrong, debug the JSON before changing the visualization.
 
 ## Project structure
 
 ```
 peloton-dashboard/
-├── README.md                    ← you are here
+├── README.md
 ├── DATA_MODEL.md                ← ERD + JSON schema reference
+├── index.html                   ← redirects GitHub Pages to the dashboard
 ├── raw_data/
-│   ├── peloton_workouts.csv    ← scrubbed Peloton export, 4,474 rows
-│   └── scrub.py                ← genericizes a fresh export before commit
+│   ├── peloton_workouts.csv     ← scrubbed Peloton export, tracked in git
+│   └── scrub.py                 ← genericizes a fresh export before commit
 ├── organized/
-│   ├── organize.py             ← reads CSV, computes everything, writes JSON
-│   └── dashboard_data.json     ← clean, structured data file
+│   ├── organize.py              ← reads CSV, computes everything, writes JSON
+│   └── dashboard_data.json      ← clean, structured dashboard data
 └── dashboard/
-    └── dashboard.html          ← self-contained dashboard (data baked in)
+    └── dashboard.html           ← self-contained dashboard with data baked in
 ```
 
-## How to refresh
-
-When you want to pull fresh Peloton data and update the dashboard:
+## Open the dashboard
 
 ```bash
-# 1. Re-export from Peloton website (Profile → Workouts → Download Workouts)
-# 2. Save it as raw_data/workouts_raw.csv (this filename is gitignored)
-# 3. Scrub it (strips time-of-day + timezone, drops Class Timestamp column):
-python3 raw_data/scrub.py
-# This produces raw_data/peloton_workouts.csv -- the file the repo tracks.
+open dashboard/dashboard.html
+```
 
-# 4. Re-run organize:
+The dashboard is self-contained after build: the JSON data is pasted directly
+into the HTML as `const DATA = ...`. It still loads Chart.js and Google Fonts
+from CDNs, so the first visual render needs internet access unless your browser
+has already cached those assets.
+
+## Refresh the data
+
+Use this when you export fresh Peloton data and want to rebuild the dashboard.
+This is the repo's manual version of the article's pull → transform → visualize
+refresh pipeline.
+
+```bash
+# 1. Gather: export from Peloton
+# Peloton website → Profile → Workouts → Download Workouts
+# Save the fresh export as raw_data/workouts_raw.csv.
+# This filename is gitignored.
+
+# 2. Scrub: remove personal/export-only fields before committing
+python3 raw_data/scrub.py
+
+# 3. Organize: regenerate the structured JSON
 cd organized && python3 organize.py
 
-# 5. Re-inject the data into the HTML:
+# 4. Visualize: bake the fresh JSON into the HTML dashboard
 cd .. && python3 -c "
 import json
 with open('organized/dashboard_data.json') as f: data = json.load(f)
 with open('dashboard/dashboard.html') as f: html = f.read()
-# Find existing DATA declaration and replace
 start = html.find('const DATA = {')
 i = start + len('const DATA = '); depth = 0; end = None
 while i < len(html):
@@ -59,99 +102,130 @@ new = html[:start] + 'const DATA = ' + json.dumps(data) + ';' + html[end:]
 with open('dashboard/dashboard.html', 'w') as f: f.write(new)
 "
 
-# 6. Open it
+# 5. Review the result
 open dashboard/dashboard.html
 ```
 
-## The architecture (Gather → Organize → Visualize)
+## Pipeline architecture
 
 ```
 ┌─────────────────┐     ┌─────────────────────┐     ┌─────────────────┐
 │   GATHER        │     │   ORGANIZE          │     │   VISUALIZE     │
 │                 │ ──> │                     │ ──> │                 │
 │ Peloton CSV     │     │ organize.py         │     │ dashboard.html  │
-│ (raw, messy)    │     │ ↓                   │     │ Reads JSON,     │
-│ 4,474 rows ×    │     │ dashboard_data.json │     │ draws charts    │
-│ 17 columns      │     │                     │     │                 │
+│ raw export      │     │ ↓                   │     │ reads JSON,     │
+│ scrubbed copy   │     │ dashboard_data.json │     │ draws charts    │
 └─────────────────┘     └─────────────────────┘     └─────────────────┘
-   you download         all logic lives here        pure display layer
+   one source           auditable logic             thin display layer
 ```
 
-**The principle:** all calculations, classifications, and aggregations happen in `organize.py`. The HTML file does no math — it reads from the JSON and paints charts. This makes the system easy to debug (wrong number → check JSON; wrong color → check HTML) and easy to refresh (re-run organize, re-inject).
+The separation is the point. Each layer has one job:
 
-## FAQ
+- **Gather** keeps the raw material recognizable and repeatable.
+- **Organize** owns classification, aggregation, rolling windows, data-quality exclusions, and event markers.
+- **Visualize** turns structured data into charts without hiding business logic in the browser.
 
-### When I email the HTML, do the values go with it?
+This makes the dashboard easier to audit. Wrong total? Check
+`organized/dashboard_data.json` and `organized/organize.py`. Wrong chart color,
+label, or interaction? Check `dashboard/dashboard.html`.
 
-**Yes.** When you build the dashboard, all the data gets baked directly into the HTML file. Specifically: the HTML template has a placeholder line —
+## Data model
 
-```javascript
-const DATA = DASHBOARD_DATA_PLACEHOLDER;
+Read [DATA_MODEL.md](./DATA_MODEL.md) when you want to trace a number or add a
+new chart. It documents:
+
+- the raw Peloton fields that matter
+- ride classification rules
+- ancillary workout handling
+- monthly volume structures
+- performance ride series
+- FTP test and event-marker structures
+- JSON schema consumed by the dashboard
+
+That file is the saved spec/data map from the article's workflow. It is the
+thing you come back to when the dashboard changes.
+
+## Verification checklist
+
+Use the same review posture from the article: you are checking a collaborator's
+work, not trusting a black box.
+
+- **Start with known facts.** Confirm the raw export row count, total workouts,
+  and current streak against Peloton.
+- **Trace one number end to end.** Pick a headline metric, find it in
+  `dashboard_data.json`, then find the calculation in `organize.py`.
+- **Look for missing categories.** Make sure non-cycling workouts, warmups,
+  cooldowns, and zero-watt rides are handled intentionally.
+- **Challenge assumptions.** Ride type and duration comparisons only make sense
+  when the cohorts are comparable; do not mix output across unlike rides.
+- **Keep context explicit.** Bike changes, recalibrations, COVID, injuries, or
+  other interpretation-changing events should live in `EVENTS`, not in chart
+  annotations scattered through the HTML.
+
+## Common edits
+
+### Add an event marker
+
+Events are a list of dicts in `organized/organize.py`. Find `EVENTS = [...]`
+and add a row:
+
+```python
+EVENTS = [
+    {'date': '2020-03-15', 'label': 'COVID',         'kind': 'context'},
+    {'date': '2022-03-01', 'label': 'New bike',      'kind': 'calibration'},
+    {'date': '2023-12-03', 'label': 'Recalibration', 'kind': 'calibration'},
+    {'date': '2025-06-01', 'label': 'Knee injury',   'kind': 'context'},
+]
 ```
 
-— and the build step (the Python snippet under "How to refresh") reads `dashboard_data.json` and pastes its entire contents into that line, producing:
+Re-run the refresh pipeline. The dashboard's `eventLines` plugin reads from
+`DATA.events`, so the new line shows up on every time-series chart.
 
-```javascript
-const DATA = {"headline":{"total_workouts":2955,...};   // ← all 372KB inline
-```
+### Add a chart
 
-Once that's done, the file is fully self-contained. No server, no external data fetch, no JSON file required at runtime. You can email it, drop it on GitHub Pages, open it offline. Caveat: it loads Chart.js and Google Fonts from CDNs, so the visuals need internet on first load (browsers cache them after).
+Start in the organize layer:
 
-### Where does the actual computation happen?
+1. Add the aggregation to `organized/organize.py`.
+2. Write the result into `dashboard_data.json`.
+3. Document the new shape in `DATA_MODEL.md`.
+4. Render it from `dashboard/dashboard.html`.
 
-Everything happens in `organize.py` — this is the "Organize" step from the dashboard article in action. The script does three kinds of work:
+If the chart requires a new calculation, do that calculation in Python first.
+The browser should receive chart-ready data.
 
-1. **Classify** — for each row in the CSV, decide what kind of workout it is. Helper functions like `classify(title)` return whether a ride is `PZ Endurance` / `PZ Standard` / `PZ Max` / `FTP Test` based on the title; `is_ancillary(row)` flags warmups and cooldowns; `bucket_for(duration)` maps minute-counts into duration buckets (45/60/75/90/120 min).
+## Sharing and deployment
 
-2. **Aggregate** — walk through 4,474 rows and group them. Monthly volume gets summed using `defaultdict`s. Performance series get bucketed by `(ride_type, duration)`, sorted by date, then run through a 90-day rolling window to compute trend lines.
+This repo is in the static-dashboard tier from the article:
 
-3. **Assemble** — bundle everything into one Python dict matching the JSON schema (see DATA_MODEL.md), then write it out:
-   ```python
-   with open(OUTPUT_FILE, 'w') as f:
-       json.dump(dashboard_data, f, indent=2)
-   ```
+- **Email / local file:** send or open `dashboard/dashboard.html`.
+- **Screenshot / PDF:** use the browser when someone needs a snapshot for a deck.
+- **GitHub Pages:** use `index.html` to serve the dashboard from a clean URL.
 
-The HTML's JavaScript only does layout work: positioning chart points, generating heatmap cells, attaching tooltips. If a chart shows a wrong number, the wrong number is already in the JSON — so debugging starts in `organize.py`, not in the HTML.
+Static hosting is enough because the data is personal, single-user, and updated
+manually. If you publish this repo or host it publicly, assume anything baked
+into `dashboard/dashboard.html` is public.
 
-### Can I add my own event marker?
+## When to graduate from JSON
 
-Yes — events are just a list of dicts in `organize.py`. Three steps:
+JSON is the right call here: the generated dashboard data is small, readable,
+and easy to bake into one HTML file. Consider PostgreSQL or another database
+only when one of these becomes true:
 
-1. **Open `organize.py`** and find the `EVENTS = [...]` list near the top of the file.
-2. **Add your entry.** It needs three fields: `date` (YYYY-MM-DD), `label` (short text shown on the chart), and `kind` (either `'context'` for grey lines like COVID, or `'calibration'` for gold lines like a bike change). Example:
-   ```python
-   EVENTS = [
-       {'date': '2020-03-15', 'label': 'COVID',         'kind': 'context'},
-       {'date': '2022-03-01', 'label': 'New bike',      'kind': 'calibration'},
-       {'date': '2023-12-03', 'label': 'Recalibration', 'kind': 'calibration'},
-       {'date': '2025-06-01', 'label': 'Knee injury',   'kind': 'context'},  # new
-   ]
-   ```
-3. **Re-run the build** (organize → inject → reload). The line shows up on every time-series chart automatically — the dashboard's `eventLines` plugin reads from `DATA.events` and draws all of them.
+- **The file gets painful.** A few MB of embedded JSON is usually fine. Larger
+  files become slow to inspect and awkward to ship.
+- **You need ad-hoc queries.** If you want to ask new questions without editing
+  `organize.py`, a database gives you a better query layer.
+- **You combine multiple sources.** Apple Health, Strava, sleep, injuries, and
+  Peloton data would be cleaner as related tables than one expanding JSON blob.
+- **You need automated refreshes.** Nightly or live updates are more robust when
+  scripts read and write a database instead of replacing a static file.
+- **Multiple people need different access.** Once users need permissions,
+  write-back, or live data, you are building an app.
 
-No chart code changes. Adding an event in one place updates all five charts.
-
-### What chart library is this?
-
-A **chart library** is a pre-built piece of JavaScript that knows how to draw common chart types (lines, bars, scatter plots) on a webpage. Without one, you'd have to draw every line and label by hand. We use [Chart.js v4](https://www.chartjs.org/) — it's free, popular, and handles most of what we need out of the box.
-
-A **CDN** (Content Delivery Network) is a public hosting service for common code libraries. Instead of downloading Chart.js and bundling it into our project, we point the HTML at a CDN URL and the browser fetches it on page load. This keeps our file small and means the library updates itself when the CDN does. The trade-off: the dashboard needs internet on first load (browsers cache it after).
-
-The custom `eventLines` plugin (the vertical reference lines for COVID, bike change, etc.) is defined inline in the HTML — Chart.js lets you write small extensions for behavior the library doesn't ship with.
-
-### How big is the dashboard file? When would I switch to a database?
-
-About **372 KB** with all data inlined — plenty small to email or host on GitHub Pages.
-
-The "graduate to a database" thresholds from the dashboard article all apply here:
-
-- **File size becomes painful.** A self-contained HTML up to a few MB still loads fast in a browser. Once you're north of ~5 MB you'll start to notice — that's roughly when an embedded JSON gets unwieldy. We're at 0.4 MB so we're nowhere close.
-- **You want to query, not just display.** A database makes sense when you want to ask ad-hoc questions ("what was my best 60-min ride in 2022?") without rewriting the organize script. Right now we'd have to add a new aggregation in Python.
-- **Multiple data sources need to combine.** If you wanted to layer in Apple Health (which we have in the original zip but didn't use), or Strava, or sleep data — joining them in JSON gets messy fast. A database with proper tables is much cleaner.
-- **Frequent automated refreshes.** If you wanted the dashboard to refresh nightly from a cron job, writing/reading from PostgreSQL is more robust than rewriting a JSON file every night.
-
-For your single-user, single-source, monthly-refresh Peloton dashboard? JSON is the right call. You'd consider PostgreSQL if you start pulling in Apple Health and want one combined fitness dashboard.
+For a single-user, single-source Peloton dashboard with monthly refreshes, the
+static HTML + JSON approach is intentionally enough.
 
 ## See also
 
-- [DATA_MODEL.md](./DATA_MODEL.md) — full schema reference for `dashboard_data.json` with ERD
+- [DATA_MODEL.md](./DATA_MODEL.md) — schema reference and calculation map
+- [Technically Curious](https://technicallycurious.substack.com/) — practical AI workflows for people past basic prompting

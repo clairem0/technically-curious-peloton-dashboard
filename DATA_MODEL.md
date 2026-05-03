@@ -5,6 +5,10 @@ Reference documentation for the data flowing through the Peloton dashboard pipel
 - You want to understand a number on the dashboard and trace it back
 - You want to extend `organize.py` with new aggregations
 
+The source of truth is `organized/organize.py`; this file explains the contract.
+Counts and date ranges below describe the current committed export and should be
+checked again after a fresh Peloton export.
+
 ## ERD: from raw rows to dashboard structures
 
 ```
@@ -133,24 +137,24 @@ The full structure of `dashboard_data.json`:
     "monthly": [
       {
         "month": "2018-02",
-        "workouts": 7,                // core
-        "workouts_ancillary": 2,
-        "hours": 8.5,
-        "hours_ancillary": 0.5,
-        "miles": 78.3,
-        "calories": 5230,
+        "workouts": 2,                // core
+        "workouts_ancillary": 0,
+        "hours": 1.8,
+        "hours_ancillary": 0.0,
+        "miles": 22.1,
+        "calories": 1092,
         "hours_by_disc": {            // stacked-chart input
-          "Cycling": 7.2,
-          "Strength": 1.3,
+          "Cycling": 1.8,
+          "Strength": 0.0,
           "Other": 0.0
         },
         "workouts_by_disc": {
-          "Cycling": 6,
-          "Strength": 1,
+          "Cycling": 2,
+          "Strength": 0,
           "Other": 0
         }
       },
-      // ...one entry per month from 2018-02 through 2026-04
+      // ...one entry per generated month; current export spans 2018-02 through 2026-05
     ],
 
     "heatmap": [
@@ -191,6 +195,7 @@ The full structure of `dashboard_data.json`:
         "60 min": { ... }
       },
       "PZ Max": {
+        "20 min": { ... },
         "45 min": { ... }
       },
       "FTP Test": {
@@ -242,6 +247,78 @@ The full structure of `dashboard_data.json`:
   ]
 }
 ```
+
+## Metric dictionary
+
+| Field | Definition | Notes |
+|---|---|---|
+| `headline.total_workouts` / `volume.totals.workouts` | Count of rows where `is_ancillary(row)` is false | This is the "core workout" count. |
+| `headline.total_workouts_raw` / `volume.totals.workouts_raw` | Count of all Peloton export rows | Includes warmups and cooldowns. |
+| `headline.ancillary_workouts` / `volume.totals.ancillary_workouts` | Raw workouts minus core workouts | Warmups/cooldowns are still available for audit. |
+| `headline.performance_rides` | Cycling rows with a recognized performance title and nonzero watts | Includes FTP tests; excludes missing or zero `Avg. Watts`. |
+| `headline.total_hours` / `volume.totals.hours` | Sum of `Length (minutes)` for non-ancillary rows, divided by 60 | Rounded to 1 decimal. |
+| `headline.total_hours_raw` / `volume.totals.hours_raw` | Sum of `Length (minutes)` for all rows, divided by 60 | Rounded to 1 decimal. |
+| `headline.years_active` | Hard-coded display value in `organize.py` | Update this when the dataset window changes materially. |
+| `headline.longest_week_streak` | Longest run of consecutive ISO weeks with at least one workout | Any workout counts, including ancillary. |
+| `headline.active_weeks` | Distinct ISO weeks with at least one workout | Any workout counts. |
+| `headline.active_months` | Distinct `YYYY-MM` values in `Workout Timestamp` | Any workout counts. |
+| `headline.active_days` | Distinct dates with at least one workout | Same population as the heatmap. |
+| `volume.totals.miles` | Sum of positive `Distance (mi)` across all rows | Includes ancillary rows when Peloton reports distance. |
+| `volume.totals.calories` | Sum of positive `Calories Burned` across all rows | Calories are estimates; use as directional context. |
+| `volume.totals.around_world_x` | `miles / 24901`, rounded to 2 decimals | Uses Earth's circumference in miles as a display comparison. |
+| `volume.monthly[].workouts` | Non-ancillary row count for the month | This drives core workout volume. |
+| `volume.monthly[].workouts_ancillary` | Ancillary row count for the month | Split out so warmups/cooldowns do not inflate core workout counts. |
+| `volume.monthly[].hours` | Non-ancillary minutes for the month divided by 60 | Rounded to 1 decimal. |
+| `volume.monthly[].hours_ancillary` | Ancillary minutes for the month divided by 60 | Rounded to 1 decimal. |
+| `volume.monthly[].miles` | Positive `Distance (mi)` summed across all rows in the month | Not limited to non-ancillary rows. |
+| `volume.monthly[].calories` | Positive `Calories Burned` summed across all rows in the month | Not limited to non-ancillary rows. |
+| `volume.monthly[].hours_by_disc` | Non-ancillary minutes by display discipline, divided by 60 | Keys are `Cycling`, `Strength`, `Other`. |
+| `volume.monthly[].workouts_by_disc` | Non-ancillary workout count by display discipline | Keys are `Cycling`, `Strength`, `Other`. |
+
+## Performance model contract
+
+The performance model is intentionally narrower than the volume model. Its job
+is to compare like with like, not to summarize every ride.
+
+To enter `performance.series`, a row must pass all of these checks:
+
+1. `Fitness Discipline` is `Cycling`.
+2. `classify(Title)` returns a performance ride type.
+3. `Avg. Watts` is present and greater than zero.
+4. `Length (minutes)` falls into one of the configured duration buckets.
+
+Then `organize.py` groups rides by `(ride_type, duration_bucket)` and produces:
+
+| Output | Rule |
+|---|---|
+| `scatter` | One point per included ride. |
+| `monthly_median` | Median watts per month, only when that month has at least 2 included rides for the same type + bucket. |
+| `rolling_median` | Right-aligned 90-day median watts, only when the trailing window has at least 3 included rides for the same type + bucket. |
+| `annual` | Yearly `avg`, `p75`, `p90`, and `max` watts for each observed type + bucket. No minimum ride count is applied. |
+| `ftp_tests` | Included FTP test rows pulled out again as a discrete dot-plot series. |
+
+The model deliberately does not compare watts across unlike ride types or
+durations. A 45-minute Power Zone Max ride and a 120-minute Power Zone Endurance
+ride are different cohorts.
+
+`cadence` and `resistance_str` are parsed inside the intermediate `performance`
+records, but they are not currently written to `dashboard_data.json`.
+
+## Generated domains
+
+Some arrays look like enums, but most of the schema is generated from observed
+data:
+
+- `performance.series` and `performance.annual` are sparse. Do not assume every
+  ride type has every duration bucket.
+- `performance.ride_types` is a display selector for trend charts and excludes
+  `FTP Test`, even though `FTP Test` exists under `performance.series`.
+- `performance.duration_buckets` comes from `DURATION_BUCKETS` in `organize.py`;
+  it lists supported buckets, not guaranteed type + bucket combinations.
+- `events.kind` is a display convention. Current values are `context` and
+  `calibration`; the code does not enforce this as a closed enum.
+- Discipline display buckets are fixed by `TOP_DISCIPLINES = ['Cycling',
+  'Strength']`; every other Peloton discipline maps to `Other`.
 
 ## Classification rules
 
@@ -303,7 +380,17 @@ Thresholds are based on Claire's actual distribution (p25/p50/p90 of non-zero da
 
 To add a new aggregation (e.g. instructor performance breakdown):
 
-1. **In `organize.py`**, add a new section that computes what you want:
+1. **In `organize.py`**, make the source field available to the aggregation. For
+   instructor performance, that means carrying instructor into each performance
+   record:
+   ```python
+   performance.append({
+       ...,
+       'instructor': r['Instructor Name'] or 'No Instructor',
+   })
+   ```
+
+2. **Add the aggregation in `organize.py`**:
    ```python
    instructor_perf = defaultdict(list)
    for r in performance:
@@ -311,7 +398,7 @@ To add a new aggregation (e.g. instructor performance breakdown):
    instructor_avg = {name: sum(w)/len(w) for name, w in instructor_perf.items()}
    ```
 
-2. **Add it to `dashboard_data`** at the bottom:
+3. **Add it to `dashboard_data`** at the bottom:
    ```python
    dashboard_data = {
        ...,
@@ -319,9 +406,23 @@ To add a new aggregation (e.g. instructor performance breakdown):
    }
    ```
 
-3. **In `dashboard.html`**, add an empty container and a JS block that reads `DATA.instructor_performance`.
+4. **Document the new shape in this file** so future edits know what the field
+   means and which rows it includes.
 
-4. Re-run organize, re-inject, refresh.
+5. **In `dashboard.html`**, add an empty container and a JS block that reads `DATA.instructor_performance`.
+
+6. Re-run organize, re-inject, refresh.
+
+## Regeneration checklist
+
+After a fresh Peloton export:
+
+1. Run `python3 raw_data/scrub.py`.
+2. Run `cd organized && python3 organize.py`.
+3. Validate `organized/dashboard_data.json` parses as JSON.
+4. Check first/last months in `volume.monthly`.
+5. Check headline counts and `data_quality_notes.rides_with_zero_watts`.
+6. Update any snapshot values in this document that changed materially.
 
 ## Data quality caveats
 

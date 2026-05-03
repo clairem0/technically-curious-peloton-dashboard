@@ -41,9 +41,15 @@
     line-height: 1.5;
   }
   body {
-    max-width: 1200px;
+    max-width: min(1200px, 100%);
     margin: 0 auto;
     padding: 4rem 2rem 6rem;
+    overflow-x: hidden;
+  }
+  #capture-zone {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .masthead { margin-bottom: 4rem; }
@@ -72,6 +78,13 @@
     font-size: 1.15rem;
     color: var(--ink-2);
     max-width: 38rem;
+  }
+  .masthead h1,
+  .masthead .lede,
+  .section-lede,
+  .card h3,
+  .card .card-sub {
+    overflow-wrap: break-word;
   }
 
   .headline {
@@ -155,12 +168,12 @@
     color: var(--ink-3);
     margin-bottom: 1.25rem;
   }
-  .card-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  .card-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
   @media (max-width: 800px) { .card-row { grid-template-columns: 1fr; } }
 
   .volume-totals {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 1.25rem;
     margin-bottom: 1.25rem;
   }
@@ -197,6 +210,10 @@
     height: 320px;
   }
   .chart-host.tall { height: 380px; }
+  .chart-host canvas {
+    display: block;
+    max-width: 100%;
+  }
 
   .controls {
     display: flex;
@@ -374,6 +391,7 @@
 
   .dl-btn-row {
     display: flex;
+    flex-wrap: wrap;
     justify-content: flex-end;
     gap: 0.5rem;
     margin: 1.5rem 0 0.5rem;
@@ -393,6 +411,229 @@
   }
   .dl-btn:hover { color: var(--ink); border-color: var(--ink-2); }
   .dl-btn:disabled { color: var(--ink-4); cursor: default; border-color: var(--line); }
+
+  @media (max-width: 900px) {
+    body {
+      padding: 3rem 1.25rem 5rem;
+    }
+    .masthead {
+      margin-bottom: 2.75rem;
+    }
+    .headline {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin: 2.25rem 0 3rem;
+      padding: 0.75rem 0;
+    }
+    .headline-stat {
+      padding: 1rem 1.25rem;
+    }
+    .headline-stat:nth-child(2n) {
+      border-right: none;
+    }
+    .headline-stat:nth-child(n+3) {
+      border-top: 1px solid var(--line);
+    }
+    .section {
+      margin-bottom: 3.75rem;
+    }
+    .volume-totals {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .card {
+      padding: 1.35rem;
+      border-radius: 12px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    body {
+      padding: 1.5rem 0.875rem 3.5rem;
+    }
+    .dl-btn-row {
+      justify-content: stretch;
+      margin: 0 0 1.5rem;
+    }
+    .dl-btn {
+      flex: 1 1 0;
+      min-width: 0;
+      min-height: 40px;
+      padding: 0.65rem 0.65rem;
+      font-size: 0.62rem;
+      letter-spacing: 0.08em;
+      white-space: normal;
+    }
+    .masthead {
+      margin-bottom: 2rem;
+    }
+    .eyebrow {
+      font-size: 0.62rem;
+      letter-spacing: 0.13em;
+      margin-bottom: 0.75rem;
+    }
+    .masthead h1 {
+      font-size: 2.75rem;
+      letter-spacing: 0;
+    }
+    .masthead .lede {
+      font-size: 1rem;
+    }
+    .headline {
+      margin: 1.75rem 0 2.5rem;
+      padding: 0.5rem 0;
+    }
+    .headline-stat {
+      padding: 0.85rem 0.75rem;
+    }
+    .headline-stat .num {
+      font-size: clamp(2rem, 10vw, 2.6rem);
+    }
+    .headline-stat .label {
+      font-size: 0.6rem;
+      letter-spacing: 0.09em;
+      line-height: 1.35;
+    }
+    .section {
+      margin-bottom: 3rem;
+    }
+    .section-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.15rem;
+    }
+    .section-header h2 {
+      font-size: 1.65rem;
+    }
+    .section-lede {
+      margin-bottom: 1.25rem;
+      font-size: 0.94rem;
+    }
+    .card {
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 10px;
+    }
+    .card h3 {
+      font-size: 1.1rem;
+    }
+    .card .card-sub {
+      font-size: 0.8rem;
+      margin-bottom: 1rem;
+    }
+    .card-row {
+      gap: 1rem;
+    }
+    .volume-totals {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+    .vol-stat {
+      padding: 1rem;
+      border-radius: 10px;
+    }
+    .vol-stat .num {
+      font-size: clamp(1.45rem, 8vw, 1.9rem);
+    }
+    .vol-stat .label {
+      font-size: 0.65rem;
+      line-height: 1.35;
+    }
+    .vol-stat .footnote {
+      font-size: 0.72rem;
+      line-height: 1.35;
+    }
+    .chart-host {
+      height: 280px;
+    }
+    .chart-host.tall {
+      height: 340px;
+    }
+    .controls {
+      display: block;
+      margin-bottom: 1rem;
+    }
+    .ctrl-group {
+      width: 100%;
+      overflow-x: visible;
+      flex-wrap: wrap;
+      padding: 0 0 0.55rem;
+      margin: 0 0 0.55rem;
+      border-right: none;
+    }
+    .ctrl-group:last-child {
+      padding-bottom: 0;
+      margin-bottom: 0;
+    }
+    .ctrl-group .ctrl-label {
+      flex: 1 0 100%;
+      min-width: 0;
+      margin: 0 0 0.15rem;
+    }
+    .ctrl {
+      flex: 0 0 auto;
+      min-height: 38px;
+      padding: 0.45rem 0.8rem;
+    }
+    table.annual {
+      display: block;
+      overflow-x: auto;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+    }
+    table.annual th, table.annual td {
+      padding: 0.55rem 0.6rem;
+    }
+    .heatmap-outer {
+      gap: 6px;
+      margin-right: -0.875rem;
+    }
+    .heatmap-day-labels {
+      font-size: 0.58rem;
+    }
+    .heatmap-scroll {
+      padding-right: 0.875rem;
+      -webkit-overflow-scrolling: touch;
+    }
+    .heatmap-legend {
+      justify-content: flex-start;
+      flex-wrap: wrap;
+      line-height: 1.4;
+    }
+    .instructor-row {
+      grid-template-columns: minmax(0, 1fr) 48px;
+      gap: 0.35rem 0.75rem;
+    }
+    .instructor-name {
+      grid-column: 1 / -1;
+      text-align: left;
+      font-size: 0.8rem;
+      line-height: 1.25;
+    }
+    .instructor-count {
+      text-align: right;
+      font-size: 0.75rem;
+    }
+    .note {
+      padding: 0.8rem 0.9rem;
+      font-size: 0.8rem;
+    }
+    footer {
+      margin-top: 3rem;
+      font-size: 0.62rem;
+      line-height: 1.7;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .volume-totals {
+      grid-template-columns: 1fr;
+    }
+    .chart-host {
+      height: 260px;
+    }
+    .chart-host.tall {
+      height: 315px;
+    }
+  }
 
   /* ── PRINT TO PDF — slide-deck style: tan background, white cards ── */
   @media print {

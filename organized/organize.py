@@ -183,7 +183,7 @@ def is_ancillary(row):
     if rtype in ('Warm Up', 'Cool Down'): return True
     return False
 
-# ── VOLUME: hours, distance, workouts per month — with discipline split ──
+# ── VOLUME: time/effort include ancillary rows; counts do not ──
 # Group "small" disciplines into "Other" so the chart stays readable
 TOP_DISCIPLINES = ['Cycling', 'Strength']
 
@@ -204,17 +204,17 @@ for r in rows:
     month = r['Workout Timestamp'][:7]
     bucket = disc_bucket(r['Fitness Discipline'])
     ancillary = is_ancillary(r)
+    if r['Length (minutes)']:
+        mins = int(r['Length (minutes)'])
+        monthly_volume[month]['minutes'] += mins
+        monthly_volume[month]['minutes_by_disc'][bucket] += mins
+        if ancillary:
+            monthly_volume[month]['minutes_ancillary'] += mins
     if ancillary:
         monthly_volume[month]['workouts_ancillary'] += 1
-        if r['Length (minutes)']:
-            monthly_volume[month]['minutes_ancillary'] += int(r['Length (minutes)'])
     else:
         monthly_volume[month]['workouts'] += 1
         monthly_volume[month]['workouts_by_disc'][bucket] += 1
-        if r['Length (minutes)']:
-            mins = int(r['Length (minutes)'])
-            monthly_volume[month]['minutes'] += mins
-            monthly_volume[month]['minutes_by_disc'][bucket] += mins
     if r['Distance (mi)'] and float(r['Distance (mi)']) > 0:
         monthly_volume[month]['miles'] += float(r['Distance (mi)'])
     if r['Calories Burned'] and float(r['Calories Burned']) > 0:
@@ -226,7 +226,7 @@ for m, v in sorted(monthly_volume.items()):
         'month': m,
         'workouts': v['workouts'],                   # excludes warmups/cooldowns
         'workouts_ancillary': v['workouts_ancillary'],
-        'hours': round(v['minutes'] / 60, 1),
+        'hours': round(v['minutes'] / 60, 1),        # includes warmups/cooldowns
         'hours_ancillary': round(v['minutes_ancillary'] / 60, 1),
         'miles': round(v['miles'], 1),
         'calories': v['calories'],
@@ -246,10 +246,14 @@ total_hours_core = round(total_minutes_core / 60, 1)
 total_miles = round(sum(float(r['Distance (mi)']) for r in rows if r['Distance (mi)'] and float(r['Distance (mi)']) > 0), 1)
 total_calories = int(sum(float(r['Calories Burned']) for r in rows if r['Calories Burned'] and float(r['Calories Burned']) > 0))
 
-# ── STREAKS — the headline insight from Codex ──
-# Active weeks (any workout)
+# ── STREAKS / DAY COUNTS ──
+# Warmups/cooldowns count toward time and effort, but not active-day credit.
+core_rows = [r for r in rows if not is_ancillary(r)]
+core_dates = [datetime.strptime(r['Workout Timestamp'][:10], '%Y-%m-%d') for r in core_rows]
+
+# Active weeks (core workouts only)
 active_weeks = set()
-for r in rows:
+for r in core_rows:
     d = datetime.strptime(r['Workout Timestamp'][:10], '%Y-%m-%d')
     iso_year, iso_week, _ = d.isocalendar()
     active_weeks.add((iso_year, iso_week))
@@ -272,41 +276,61 @@ def consecutive_week_streaks(weeks):
     return longest
 
 longest_week_streak = consecutive_week_streaks(active_weeks)
+if core_dates:
+    first_week = datetime.fromisocalendar(*min(active_weeks), 1)
+    last_week = datetime.fromisocalendar(*max(active_weeks), 1)
+    active_week_span = ((last_week - first_week).days // 7) + 1
+else:
+    active_week_span = 0
 
-# Active months (any workout)
-active_months = set(r['Workout Timestamp'][:7] for r in rows)
+# Active months (core workouts only)
+active_months = set(r['Workout Timestamp'][:7] for r in core_rows)
+if active_months:
+    first_month = min(active_months)
+    last_month = max(active_months)
+    first_year, first_mon = map(int, first_month.split('-'))
+    last_year, last_mon = map(int, last_month.split('-'))
+    active_month_span = (last_year - first_year) * 12 + (last_mon - first_mon) + 1
+else:
+    active_month_span = 0
 
-# Total distinct days with at least one workout
-active_days = set(r['Workout Timestamp'][:10] for r in rows)
+# Total distinct days with at least one core workout
+active_days = set(r['Workout Timestamp'][:10] for r in core_rows)
 
 # Performance ride counts
 perf_count = len(performance)
 
-# ── HEATMAP — color by daily kJ (training load), not workout count ──
-# kJ from cycling captures intensity × duration in one number.
-# Strength/stretching days have 0 kJ — we still mark them as a workout day.
-daily = defaultdict(lambda: {'count': 0, 'kj': 0})
+# ── HEATMAP — color by estimated daily effort, not workout count ──
+# Calories are Peloton estimates, but they cover strength and other disciplines.
+# Warmups/cooldowns add effort without inflating the core workout count.
+daily = defaultdict(lambda: {'count': 0, 'calories': 0, 'kj': 0})
 for r in rows:
     d = r['Workout Timestamp'][:10]
-    daily[d]['count'] += 1
+    if not is_ancillary(r):
+        daily[d]['count'] += 1
+    if r['Calories Burned']:
+        try:
+            daily[d]['calories'] += int(float(r['Calories Burned']))
+        except ValueError:
+            pass
     if r['Total Output']:
         try:
             daily[d]['kj'] += int(r['Total Output'])
         except ValueError:
             pass
 
-# Tiers based on Claire's actual distribution (p25/p50/p75/p90 of non-zero days):
-#   l0 (no workout): empty cell
-#   l1: workout but no cycling kJ (strength-only day)
-#   l2: 1–700 kJ      (light cycling)
-#   l3: 700–1100 kJ   (moderate)
-#   l4: 1100–1500 kJ  (solid)
-#   l5: 1500+ kJ      (big day)
-def kj_tier(kj):
-    if kj == 0: return 1  # workout but no cycling
-    if kj < 700: return 2
-    if kj < 1100: return 3
-    if kj < 1500: return 4
+# Tiers based on the exported daily calorie distribution:
+#   l0 (no core workout / no estimated effort): empty cell
+#   l1: core workout with no calorie estimate
+#   l2: 1–299 cal      (light / strength-only)
+#   l3: 300–1,199 cal  (moderate)
+#   l4: 1,200–1,599 cal
+#   l5: 1,600+ cal
+def effort_tier(calories, count):
+    if calories == 0 and count > 0: return 1
+    if calories < 300: return 2
+    if calories < 1200: return 3
+    if calories < 1600: return 4
     return 5
 
 heatmap = [
@@ -314,9 +338,11 @@ heatmap = [
         'date': d,
         'count': v['count'],
         'kj': v['kj'],
-        'tier': kj_tier(v['kj']),
+        'calories': v['calories'],
+        'tier': effort_tier(v['calories'], v['count']),
     }
     for d, v in sorted(daily.items())
+    if v['count'] > 0 or v['calories'] > 0
 ]
 
 # ── INSTRUCTORS ──
@@ -333,12 +359,15 @@ dashboard_data = {
         'total_workouts_raw': total_workouts,
         'ancillary_workouts': total_workouts_ancillary,
         'performance_rides': perf_count,
-        'total_hours': total_hours_core,
+        'total_hours': total_hours,
+        'total_hours_core': total_hours_core,
         'total_hours_raw': total_hours,
         'years_active': 8.2,
         'longest_week_streak': longest_week_streak,
         'active_weeks': len(active_weeks),
+        'active_week_span': active_week_span,
         'active_months': len(active_months),
+        'active_month_span': active_month_span,
         'active_days': len(active_days),
     },
     'volume': {
@@ -346,7 +375,8 @@ dashboard_data = {
             'workouts': total_workouts_core,
             'workouts_raw': total_workouts,
             'ancillary_workouts': total_workouts_ancillary,
-            'hours': total_hours_core,
+            'hours': total_hours,
+            'hours_core': total_hours_core,
             'hours_raw': total_hours,
             'miles': total_miles,
             'calories': total_calories,
@@ -376,13 +406,13 @@ with open(OUTPUT_FILE, 'w') as f:
 # ── REPORT ──
 print(f'v6 organized → {OUTPUT_FILE}')
 print(f'\nHEADLINE:')
-print(f'  Total workouts: {total_workouts:,}')
+print(f'  Core workouts: {total_workouts_core:,} (+{total_workouts_ancillary:,} ancillary)')
 print(f'  Performance rides: {perf_count:,}')
-print(f'  Total hours: {total_hours:,}')
-print(f'  Active weeks: {len(active_weeks)}/424 ({len(active_weeks)/424*100:.0f}%)')
+print(f'  Training hours: {total_hours:,} ({total_hours_core:,} core)')
+print(f'  Active weeks: {len(active_weeks)}/{active_week_span} ({len(active_weeks)/active_week_span*100:.0f}%)')
 print(f'  Longest weekly streak: {longest_week_streak} weeks')
-print(f'  Active months: {len(active_months)}/100')
-print(f'\nVOLUME totals: {total_workouts:,} workouts, {total_hours:,} hours, {total_miles:,} mi, {total_calories:,} cal')
+print(f'  Active months: {len(active_months)}/{active_month_span}')
+print(f'\nVOLUME totals: {total_workouts_core:,} core workouts, {total_hours:,} hours, {total_miles:,} mi, {total_calories:,} cal')
 print(f'\nPERFORMANCE series available:')
 for ride_type, buckets in performance_series.items():
     for bucket, data in buckets.items():

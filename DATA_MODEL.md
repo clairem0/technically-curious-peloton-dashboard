@@ -21,7 +21,7 @@ checked again after a fresh Peloton export.
 │ Length (minutes)           │  ← drives duration bucket
 │ Fitness Discipline         │  ← drives volume split
 │ Avg. Watts                 │  ← primary fitness metric
-│ Total Output (kJ)          │  ← training load metric
+│ Total Output (kJ)          │  ← cycling output, retained for audit
 │ Distance (mi)              │
 │ Calories Burned            │
 │ Instructor Name            │
@@ -39,10 +39,9 @@ checked again after a fresh Peloton export.
 │ ALL ROWS     │   │ PERFORMANCE RIDE │  ← classified subset
 ├──────────────┤   ├──────────────────┤
 │ used for:    │   │ ride_type        │  (PZ Endurance / PZ Standard /
-│ - heatmap    │   │ duration         │   PZ Max / FTP Test)
-│ - volume     │   │ duration_bucket  │
+│ - volume     │   │ duration         │   PZ Max / FTP Test)
+│ - heatmap    │   │ duration_bucket  │
 │ - instructors│   │ watts            │  (45/60/75/90/120 min)
-│ - active days│   │ date_obj         │
 └──────────────┘   └──────────────────┘
         │                   │
         │                   │ grouped by (ride_type, duration_bucket)
@@ -63,7 +62,7 @@ checked again after a fresh Peloton export.
 ├──────────────────────┤
 │ workouts (core)      │  excludes ancillary
 │ workouts_ancillary   │
-│ hours / minutes      │
+│ hours / minutes      │  includes ancillary
 │ miles                │
 │ calories             │
 │ hours_by_disc        │  {Cycling, Strength, Other}
@@ -71,12 +70,13 @@ checked again after a fresh Peloton export.
 └──────────────────────┘
 
 ┌──────────────────────┐
-│ HEATMAP DAY          │  one entry per day-with-workout
+│ HEATMAP DAY          │  one entry per day with core workout or estimated effort
 ├──────────────────────┤
 │ date                 │
-│ count                │  workouts that day (incl ancillary)
-│ kj                   │  total cycling kJ
-│ tier                 │  1–5 based on kJ thresholds
+│ count                │  core workouts that day
+│ calories             │  estimated effort, all disciplines
+│ kj                   │  cycling output, retained for audit
+│ tier                 │  1–5 based on estimated calories
 └──────────────────────┘
 
 ┌──────────────────────┐
@@ -113,13 +113,16 @@ The full structure of `dashboard_data.json`:
     "total_workouts_raw": 4474,       // including warmups/cooldowns
     "ancillary_workouts": 1519,
     "performance_rides": 1468,         // tracked PZ + FTP rides only
-    "total_hours": 2278.4,             // core
+    "total_hours": 2621.1,             // all workout time
+    "total_hours_core": 2278.4,
     "total_hours_raw": 2621.1,
     "years_active": 8.2,
     "longest_week_streak": 383,        // consecutive weeks ridden
     "active_weeks": 427,
+    "active_week_span": 428,
     "active_months": 100,
-    "active_days": 2357
+    "active_month_span": 100,
+    "active_days": 2350
   },
 
   "volume": {
@@ -127,7 +130,8 @@ The full structure of `dashboard_data.json`:
       "workouts": 2955,
       "workouts_raw": 4474,
       "ancillary_workouts": 1519,
-      "hours": 2278.4,
+      "hours": 2621.1,
+      "hours_core": 2278.4,
       "hours_raw": 2621.1,
       "miles": 45563.2,
       "calories": 2505886,
@@ -160,8 +164,9 @@ The full structure of `dashboard_data.json`:
     "heatmap": [
       {
         "date": "2018-02-25",
-        "count": 1,                   // workouts that day
-        "kj": 790,                    // total cycling kJ
+        "count": 2,                   // core workouts that day
+        "kj": 790,                    // cycling output, audit/supporting field
+        "calories": 1092,             // estimated effort across disciplines
         "tier": 3                     // color tier 1–5
       },
       // ...one entry per day with at least one workout
@@ -256,23 +261,26 @@ The full structure of `dashboard_data.json`:
 | `headline.total_workouts_raw` / `volume.totals.workouts_raw` | Count of all Peloton export rows | Includes warmups and cooldowns. |
 | `headline.ancillary_workouts` / `volume.totals.ancillary_workouts` | Raw workouts minus core workouts | Warmups/cooldowns are still available for audit. |
 | `headline.performance_rides` | Cycling rows with a recognized performance title and nonzero watts | Includes FTP tests; excludes missing or zero `Avg. Watts`. |
-| `headline.total_hours` / `volume.totals.hours` | Sum of `Length (minutes)` for non-ancillary rows, divided by 60 | Rounded to 1 decimal. |
-| `headline.total_hours_raw` / `volume.totals.hours_raw` | Sum of `Length (minutes)` for all rows, divided by 60 | Rounded to 1 decimal. |
+| `headline.total_hours` / `volume.totals.hours` | Sum of `Length (minutes)` for all rows, divided by 60 | Includes warmups/cooldowns; rounded to 1 decimal. |
+| `headline.total_hours_core` / `volume.totals.hours_core` | Sum of `Length (minutes)` for non-ancillary rows, divided by 60 | Core-only audit value; rounded to 1 decimal. |
+| `headline.total_hours_raw` / `volume.totals.hours_raw` | Alias of all-row hours for backward compatibility | Same value as `total_hours`. |
 | `headline.years_active` | Hard-coded display value in `organize.py` | Update this when the dataset window changes materially. |
-| `headline.longest_week_streak` | Longest run of consecutive ISO weeks with at least one workout | Any workout counts, including ancillary. |
-| `headline.active_weeks` | Distinct ISO weeks with at least one workout | Any workout counts. |
-| `headline.active_months` | Distinct `YYYY-MM` values in `Workout Timestamp` | Any workout counts. |
-| `headline.active_days` | Distinct dates with at least one workout | Same population as the heatmap. |
+| `headline.longest_week_streak` | Longest run of consecutive ISO weeks with at least one core workout | Warmups/cooldowns do not create active-week credit. |
+| `headline.active_weeks` | Distinct ISO weeks with at least one core workout | Warmups/cooldowns excluded. |
+| `headline.active_week_span` | Inclusive ISO-week span between first and latest core workout week | Used for consistency denominator. |
+| `headline.active_months` | Distinct `YYYY-MM` values with at least one core workout | Warmups/cooldowns excluded. |
+| `headline.active_month_span` | Inclusive month span between first and latest core workout month | Used for consistency denominator. |
+| `headline.active_days` | Distinct dates with at least one core workout | Warmups/cooldowns excluded from day-count credit. |
 | `volume.totals.miles` | Sum of positive `Distance (mi)` across all rows | Includes ancillary rows when Peloton reports distance. |
 | `volume.totals.calories` | Sum of positive `Calories Burned` across all rows | Calories are estimates; use as directional context. |
 | `volume.totals.around_world_x` | `miles / 24901`, rounded to 2 decimals | Uses Earth's circumference in miles as a display comparison. |
 | `volume.monthly[].workouts` | Non-ancillary row count for the month | This drives core workout volume. |
 | `volume.monthly[].workouts_ancillary` | Ancillary row count for the month | Split out so warmups/cooldowns do not inflate core workout counts. |
-| `volume.monthly[].hours` | Non-ancillary minutes for the month divided by 60 | Rounded to 1 decimal. |
+| `volume.monthly[].hours` | All minutes for the month divided by 60 | Includes warmups/cooldowns; rounded to 1 decimal. |
 | `volume.monthly[].hours_ancillary` | Ancillary minutes for the month divided by 60 | Rounded to 1 decimal. |
 | `volume.monthly[].miles` | Positive `Distance (mi)` summed across all rows in the month | Not limited to non-ancillary rows. |
 | `volume.monthly[].calories` | Positive `Calories Burned` summed across all rows in the month | Not limited to non-ancillary rows. |
-| `volume.monthly[].hours_by_disc` | Non-ancillary minutes by display discipline, divided by 60 | Keys are `Cycling`, `Strength`, `Other`. |
+| `volume.monthly[].hours_by_disc` | All minutes by display discipline, divided by 60 | Keys are `Cycling`, `Strength`, `Other`; includes warmups/cooldowns. |
 | `volume.monthly[].workouts_by_disc` | Non-ancillary workout count by display discipline | Keys are `Cycling`, `Strength`, `Other`. |
 
 ## Performance model contract
@@ -316,7 +324,8 @@ data:
 - `performance.duration_buckets` comes from `DURATION_BUCKETS` in `organize.py`;
   it lists supported buckets, not guaranteed type + bucket combinations.
 - `events.kind` is a display convention. Current values are `context` and
-  `calibration`; the code does not enforce this as a closed enum.
+  `calibration`; context markers may appear on volume charts, while calibration
+  markers should remain limited to watts charts.
 - Discipline display buckets are fixed by `TOP_DISCIPLINES = ['Cycling',
   'Strength']`; every other Peloton discipline maps to `Other`.
 
@@ -342,7 +351,7 @@ These are the business rules that turn raw rows into structured data. They live 
 | `Type` is `'Warm Up'` or `'Cool Down'` | `True` |
 | Otherwise | `False` |
 
-Ancillary rides are excluded from "real workout" counts and "real hours" totals.
+Ancillary rides are excluded from core workout counts and active-day credit, but included in time and estimated effort totals.
 
 ### `bucket_for(duration)` — which duration bucket does this ride fall into?
 
@@ -364,17 +373,17 @@ Ancillary rides are excluded from "real workout" counts and "real hours" totals.
 | `'Strength'` | `'Strength'` |
 | Anything else (Running, Stretching, etc.) | `'Other'` |
 
-### Heatmap kJ tiers
+### Heatmap effort tiers
 
-| Daily kJ | Tier | Color |
+| Estimated daily calories | Tier | Color |
 |---|---|---|
-| Day with workout, 0 cycling kJ (strength only) | 1 | lightest tan |
-| 1–699 | 2 | light orange |
-| 700–1,099 | 3 | mid orange |
-| 1,100–1,499 | 4 | deep orange |
-| 1,500+ | 5 | deep rust |
+| Core workout with no calorie estimate | 1 | lightest tan |
+| 1–299 | 2 | light orange |
+| 300–1,199 | 3 | mid orange |
+| 1,200–1,599 | 4 | deep orange |
+| 1,600+ | 5 | deep rust |
 
-Thresholds are based on Claire's actual distribution (p25/p50/p90 of non-zero days). For a different rider, you'd recalibrate.
+Thresholds are based on the exported daily calorie distribution. Calories are noisy, but unlike cycling output kJ, they cover strength and other non-bike disciplines.
 
 ## Extending the data model
 
@@ -429,8 +438,8 @@ After a fresh Peloton export:
 | Source of noise | What we do |
 |---|---|
 | 158 cycling rides with 0 watts (sensor failure) | Excluded from performance series |
-| Ancillary warmups/cooldowns inflate workout counts | Excluded from `workouts` (visible in `workouts_raw`) |
-| Bike calibration changed in Mar 2022 and Dec 2023 | Marked with vertical lines; not used as causal explanation |
+| Ancillary warmups/cooldowns inflate workout counts | Excluded from `workouts` and day-count credit, included in time and effort |
+| Bike calibration changed in Mar 2022 and Dec 2023 | Marked only on watts charts; not used as causal explanation |
 | `Avg. Heartrate` column has only 1 nonzero value across 4,474 rows | Ignored entirely — not usable |
 | Mixing across durations smooths watts misleadingly | All performance metrics scoped to type × duration |
-| Calories are estimates with wide error bars | Shown but labeled "Estimated · noisy" |
+| Calories are estimates with wide error bars | Used for all-discipline effort coloring and labeled as estimated |

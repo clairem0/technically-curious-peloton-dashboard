@@ -18,12 +18,11 @@ the right level of complexity for a personal, single-source dashboard.
 
 Two questions, kept intentionally separate:
 
-1. **How much** — total volume across hours, miles, workouts, calories, and weekly consistency.
-2. **How strong** — power output trends scoped to comparable ride types and durations.
+1. **Training volume** — hours and estimated effort across all workouts, with warmups and cooldowns included in time but excluded from workout counts.
+2. **Power trends** — output scoped to comparable ride types and durations.
 
-The headline story is an unbroken weekly Peloton streak going back to 2018. The
-analysis keeps that volume story separate from performance so a high-mileage
-month does not get mistaken for a stronger riding month.
+The analysis keeps volume, consistency, and power separate so high-mileage or
+high-hour months do not get mistaken for stronger riding months.
 
 ## How this maps to the article
 
@@ -150,17 +149,16 @@ thing you come back to when the dashboard changes.
 Use the same review posture from the article: you are checking a collaborator's
 work, not trusting a black box.
 
-- **Start with known facts.** Confirm the raw export row count, total workouts,
-  and current streak against Peloton.
+- **Start with known facts.** Confirm the raw export row count, core workout
+  count, total hours, and current streak against Peloton.
 - **Trace one number end to end.** Pick a headline metric, find it in
   `dashboard_data.json`, then find the calculation in `organize.py`.
 - **Look for missing categories.** Make sure non-cycling workouts, warmups,
   cooldowns, and zero-watt rides are handled intentionally.
 - **Challenge assumptions.** Ride type and duration comparisons only make sense
   when the cohorts are comparable; do not mix output across unlike rides.
-- **Keep context explicit.** Bike changes, recalibrations, COVID, injuries, or
-  other interpretation-changing events should live in `EVENTS`, not in chart
-  annotations scattered through the HTML.
+- **Keep context explicit.** Context events can appear on volume charts;
+  calibration events should render only on watts charts.
 
 ## Common edits
 
@@ -179,7 +177,8 @@ EVENTS = [
 ```
 
 Re-run the refresh pipeline. The dashboard's `eventLines` plugin reads from
-`DATA.events`, so the new line shows up on every time-series chart.
+`DATA.events`; context markers can appear on volume charts, while calibration
+markers should stay limited to watts charts.
 
 ### Add a chart
 
@@ -198,7 +197,7 @@ The browser should receive chart-ready data.
 This repo is in the static-dashboard tier from the article:
 
 - **Email / local file:** send or open `dashboard/dashboard.html`.
-- **Screenshot / PDF:** use the browser when someone needs a snapshot for a deck.
+- **PNG export:** use the dashboard button when someone needs a snapshot for a deck.
 - **GitHub Pages:** use `index.html` to serve the dashboard from a clean URL.
 
 Static hosting is enough because the data is personal, single-user, and updated

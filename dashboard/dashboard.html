@@ -171,6 +171,21 @@
     color: var(--ink);
     margin-bottom: 0.25rem;
   }
+  .card-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 0.25rem;
+  }
+  .card-heading h3 {
+    margin-bottom: 0;
+  }
+  .card-actions {
+    display: flex;
+    justify-content: flex-end;
+    flex: 0 0 auto;
+  }
   .card .card-sub {
     font-size: 0.85rem;
     color: var(--ink-3);
@@ -406,6 +421,14 @@
   }
   .dl-btn:hover { color: var(--ink); border-color: var(--ink-2); }
   .dl-btn:disabled { color: var(--ink-4); cursor: default; border-color: var(--line); }
+  .card-export-btn {
+    padding: 0.45rem 0.8rem;
+    font-size: 0.58rem;
+    letter-spacing: 0.08em;
+  }
+  .exporting-card .card-actions {
+    display: none;
+  }
 
   @media (max-width: 900px) {
     body {
@@ -509,6 +532,17 @@
     }
     .card h3 {
       font-size: 1.1rem;
+    }
+    .card-heading {
+      display: block;
+    }
+    .card-actions {
+      justify-content: stretch;
+      margin: 0.75rem 0 0;
+    }
+    .card-export-btn {
+      width: 100%;
+      min-height: 38px;
     }
     .card .card-sub {
       font-size: 0.8rem;
@@ -662,15 +696,25 @@
 
   <div class="volume-totals" id="volumeTotals"></div>
 
-  <div class="card">
-    <h3 id="volumeChartTitle">Training hours per month</h3>
+  <div class="card" id="volumeCard">
+    <div class="card-heading">
+      <h3 id="volumeChartTitle">Training hours per month</h3>
+      <div class="card-actions">
+        <button class="dl-btn card-export-btn" id="volumeDlBtn" onclick="downloadVolumeCard()">↓ Export chart PNG</button>
+      </div>
+    </div>
     <p class="card-sub" id="volumeChartSub">All workout time, including warmups and cooldowns · split by discipline</p>
     <div class="controls" id="volumeControls"></div>
     <div class="chart-host"><canvas id="volumeChart"></canvas></div>
   </div>
 
-  <div class="card">
-    <h3>Workout consistency</h3>
+  <div class="card" id="consistencyCard">
+    <div class="card-heading">
+      <h3>Workout consistency</h3>
+      <div class="card-actions">
+        <button class="dl-btn card-export-btn" id="consistencyDlBtn" onclick="downloadConsistencyCard()">↓ Export chart PNG</button>
+      </div>
+    </div>
     <p class="card-sub">Daily effort estimate · color = Peloton calories across all disciplines</p>
     <div id="heatmapHost"></div>
   </div>
@@ -683,8 +727,13 @@
   </div>
   <p class="section-lede">Power Zone + FTP rides are cycling workouts with a recognized Power Zone or FTP format and valid average watts. The chart compares rides within the same type and duration.</p>
 
-  <div class="card">
-    <h3>Comparable ride power</h3>
+  <div class="card" id="performanceCard">
+    <div class="card-heading">
+      <h3>Comparable ride power</h3>
+      <div class="card-actions">
+        <button class="dl-btn card-export-btn" id="performanceDlBtn" onclick="downloadPerformanceCard()">↓ Export chart PNG</button>
+      </div>
+    </div>
     <p class="card-sub" id="perfChartSub">Avg watts · selected cohort · 90-day rolling median plus individual rides</p>
     <div class="controls" id="perfControls"></div>
     <div class="chart-host tall"><canvas id="perfChart"></canvas></div>
@@ -1242,39 +1291,45 @@ function buildPerfChart(rideType, bucket) {
 })();
 
 // ── EXPORT TO PNG ──
-function downloadDashboard() {
-  var btn = document.getElementById('dlBtn');
+function captureElementAsPng(config) {
+  var btn = document.getElementById(config.buttonId);
+  var zone = document.getElementById(config.targetId);
+  if (!btn || !zone) return;
+
   btn.disabled = true;
+  var originalText = btn.textContent;
   btn.textContent = 'Generating…';
-  var zone = document.getElementById('capture-zone');
 
   // Force the body to render at a fixed wide width so the export looks the same
   // regardless of the user's browser size. Restore after capture.
-  var EXPORT_WIDTH = 1280;
-  var EXPORT_PADDING = 32;  // px of breathing room on each side
+  var EXPORT_WIDTH = config.exportWidth || 1280;
+  var EXPORT_PADDING = config.padding || 0;
   var originalMaxWidth = document.body.style.maxWidth;
   var originalWidth = document.body.style.width;
   var originalBodyPadding = document.body.style.padding;
   var originalZonePadding = zone.style.padding;
+  var shouldHideCardActions = !!config.hideCardActions;
   document.body.style.maxWidth = EXPORT_WIDTH + 'px';
   document.body.style.width = EXPORT_WIDTH + 'px';
   // Zero body padding so capture-zone fills the full export width symmetrically;
   // capture-zone provides the explicit padding instead.
   document.body.style.padding = '0';
-  zone.style.padding = EXPORT_PADDING + 'px';
+  if (EXPORT_PADDING) zone.style.padding = EXPORT_PADDING + 'px';
+  if (shouldHideCardActions) zone.classList.add('exporting-card');
 
   // Wait one frame for the layout to settle, then capture
   requestAnimationFrame(function() {
+    var captureWidth = config.width || Math.ceil(zone.getBoundingClientRect().width);
     html2canvas(zone, {
       scale: 2,
       backgroundColor: '#fafaf7',
       useCORS: true,
       logging: false,
-      width: EXPORT_WIDTH,
+      width: captureWidth,
       windowWidth: EXPORT_WIDTH,
     }).then(function(canvas) {
       var link = document.createElement('a');
-      link.download = 'peloton-dashboard-' + new Date().toISOString().slice(0, 10) + '.png';
+      link.download = config.filePrefix + '-' + new Date().toISOString().slice(0, 10) + '.png';
       link.href = canvas.toDataURL('image/png');
       link.click();
     }).catch(function(err) {
@@ -1286,9 +1341,58 @@ function downloadDashboard() {
       document.body.style.width = originalWidth;
       document.body.style.padding = originalBodyPadding;
       zone.style.padding = originalZonePadding;
+      if (shouldHideCardActions) zone.classList.remove('exporting-card');
       btn.disabled = false;
-      btn.textContent = '↓ Export as PNG';
+      btn.textContent = originalText;
     });
+  });
+}
+
+function downloadDashboard() {
+  captureElementAsPng({
+    buttonId: 'dlBtn',
+    targetId: 'capture-zone',
+    filePrefix: 'peloton-dashboard',
+    exportWidth: 1280,
+    padding: 32,
+    width: 1280,
+  });
+}
+
+function filenameSlug(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function downloadVolumeCard() {
+  captureElementAsPng({
+    buttonId: 'volumeDlBtn',
+    targetId: 'volumeCard',
+    filePrefix: 'peloton-volume-' + filenameSlug(currentVolumeMetric),
+    exportWidth: 1280,
+    hideCardActions: true,
+  });
+}
+
+function downloadConsistencyCard() {
+  captureElementAsPng({
+    buttonId: 'consistencyDlBtn',
+    targetId: 'consistencyCard',
+    filePrefix: 'peloton-workout-consistency',
+    exportWidth: 1280,
+    hideCardActions: true,
+  });
+}
+
+function downloadPerformanceCard() {
+  captureElementAsPng({
+    buttonId: 'performanceDlBtn',
+    targetId: 'performanceCard',
+    filePrefix: 'peloton-power-' + filenameSlug(currentPerf.type) + '-' + filenameSlug(currentPerf.bucket),
+    exportWidth: 1280,
+    hideCardActions: true,
   });
 }
 

@@ -109,33 +109,33 @@ The full structure of `dashboard_data.json`:
 ```js
 {
   "headline": {
-    "total_workouts": 2955,           // core (no warmups)
-    "total_workouts_raw": 4474,       // including warmups/cooldowns
-    "ancillary_workouts": 1519,
-    "performance_rides": 1468,         // tracked PZ + FTP rides only
-    "total_hours": 2621.1,             // all workout time
-    "total_hours_core": 2278.4,
-    "total_hours_raw": 2621.1,
+    "total_workouts": 2964,           // core (no warmups)
+    "total_workouts_raw": 4490,       // including warmups/cooldowns
+    "ancillary_workouts": 1526,
+    "performance_rides": 1474,         // tracked PZ + FTP rides only
+    "total_hours": 2629.8,             // all workout time
+    "total_hours_core": 2285.8,
+    "total_hours_raw": 2629.8,
     "years_active": 8.2,
-    "longest_week_streak": 383,        // consecutive weeks ridden
-    "active_weeks": 427,
-    "active_week_span": 428,
+    "longest_week_streak": 384,        // consecutive weeks ridden
+    "active_weeks": 428,
+    "active_week_span": 429,
     "active_months": 100,
     "active_month_span": 100,
-    "active_days": 2350
+    "active_days": 2359
   },
 
   "volume": {
     "totals": {
-      "workouts": 2955,
-      "workouts_raw": 4474,
-      "ancillary_workouts": 1519,
-      "hours": 2621.1,
-      "hours_core": 2278.4,
-      "hours_raw": 2621.1,
-      "miles": 45563.2,
-      "calories": 2505886,
-      "around_world_x": 1.83
+      "workouts": 2964,
+      "workouts_raw": 4490,
+      "ancillary_workouts": 1526,
+      "hours": 2629.8,
+      "hours_core": 2285.8,
+      "hours_raw": 2629.8,
+      "miles": 45740.2,
+      "calories": 2515482,
+      "around_world_x": 1.84
     },
 
     "monthly": [
@@ -177,17 +177,17 @@ The full structure of `dashboard_data.json`:
     "series": {
       "PZ Endurance": {
         "60 min": {
-          "total_rides": 139,
+          "total_rides": 140,
           "scatter": [
-            {"date": "2018-03-04", "watts": 215},
+            {"date": "2018-02-25", "watts": 219},
             // ...one per ride
           ],
           "monthly_median": [
-            {"month": "2020-08", "median_watts": 248.0, "rides": 5},
+            {"month": "2020-08", "median_watts": 250.0, "rides": 5},
             // months with ≥2 rides only
           ],
           "rolling_median": [
-            {"date": "2020-12-15", "rolling_median": 252.3, "sample_size": 14},
+            {"date": "2020-12-22", "rolling_median": 257.5, "sample_size": 14},
             // ...one per ride with ≥3 rides in trailing 90 days
           ]
         },
@@ -440,6 +440,6 @@ After a fresh Peloton export:
 | 158 cycling rides with 0 watts (sensor failure) | Excluded from performance series |
 | Ancillary warmups/cooldowns inflate workout counts | Excluded from `workouts` and day-count credit, included in time and effort |
 | Bike calibration changed in Mar 2022 and Dec 2023 | Marked only on watts charts; not used as causal explanation |
-| `Avg. Heartrate` column has only 1 nonzero value across 4,474 rows | Ignored entirely — not usable |
+| `Avg. Heartrate` column has only 1 nonzero value across 4,490 rows | Ignored entirely — not usable |
 | Mixing across durations smooths watts misleadingly | All performance metrics scoped to type × duration |
 | Calories are estimates with wide error bars | Used for all-discipline effort coloring and labeled as estimated |

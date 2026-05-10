@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Peloton Dashboard Docs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #fafaf7;
+      --surface: #ffffff;
+      --ink: #0f1417;
+      --ink-2: #3d4348;
+      --ink-3: #6c7177;
+      --ink-4: #a3a8ad;
+      --line: #e7e4dd;
+      --accent: #d24417;
+      --volume: #1f4d4a;
+      --serif: 'Fraunces', Georgia, serif;
+      --sans: 'Inter', -apple-system, sans-serif;
+      --mono: 'JetBrains Mono', ui-monospace, monospace;
+    }
+    * { box-sizing: border-box; }
+    html { background: var(--bg); }
+    body {
+      margin: 0 auto;
+      max-width: 980px;
+      padding: 3rem 1.5rem 4rem;
+      color: var(--ink);
+      font-family: var(--sans);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    .eyebrow {
+      color: var(--ink-4);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.16em;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+    }
+    h1 {
+      font-family: var(--serif);
+      font-size: clamp(2.2rem, 6vw, 4.5rem);
+      font-weight: 500;
+      letter-spacing: 0;
+      line-height: 0.95;
+      margin: 0 0 1rem;
+    }
+    h1 em { color: var(--accent); font-style: normal; }
+    .lede {
+      color: var(--ink-2);
+      font-size: 1.05rem;
+      max-width: 42rem;
+      margin: 0 0 2rem;
+    }
+    .footer-links {
+      border-top: 1px solid var(--line);
+      color: var(--ink-3);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1rem;
+      margin-top: 2.5rem;
+      padding-top: 1rem;
+    }
+    .footer-label {
+      color: var(--ink-4);
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      width: 100%;
+    }
+    .footer-links a {
+      color: var(--ink-2);
+      font-family: var(--mono);
+      font-size: 0.64rem;
+      letter-spacing: 0.1em;
+      text-decoration: none;
+      text-transform: uppercase;
+    }
+    .footer-links a:hover { color: var(--accent); }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      min-height: 15rem;
+      padding: 1.2rem;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .card:hover { border-color: #d6d2c9; }
+    .card h2 {
+      font-family: var(--serif);
+      font-size: 1.35rem;
+      font-weight: 500;
+      line-height: 1.1;
+      margin: 0 0 0.75rem;
+    }
+    .card p {
+      color: var(--ink-3);
+      font-size: 0.92rem;
+      margin: 0;
+    }
+    .label {
+      color: var(--volume);
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      margin-top: 1.5rem;
+      text-transform: uppercase;
+    }
+    @media (max-width: 800px) {
+      .grid { grid-template-columns: 1fr; }
+      body { padding-top: 2rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="eyebrow">Peloton Dashboard Docs</div>
+  <h1>How the <em>dashboard</em> works.</h1>
+  <p class="lede">Companion pages for the static Peloton dashboard: the data model, the transformation flow, and the visuals used to explain how raw workout exports become an auditable dashboard.</p>
+
+  <div class="grid">
+    <a class="card" href="data-model-explainer.html">
+      <div>
+        <h2>Data Model Explainer</h2>
+        <p>Step-by-step walkthrough of CSV input, classification rules, generated JSON, and the static dashboard layer.</p>
+      </div>
+      <div class="label">Full explainer</div>
+    </a>
+    <a class="card" href="visuals/data-flow.html">
+      <div>
+        <h2>Raw Data Flow</h2>
+        <p>Compact visual showing how sample CSV rows move through classification into volume and performance tracks.</p>
+      </div>
+      <div class="label">Article visual</div>
+    </a>
+    <a class="card" href="visuals/organized-data-schema.html">
+      <div>
+        <h2>Organized Data Shape</h2>
+        <p>Compact visual showing the dashboard data model: headline stats, monthly volume, heatmap, performance series, FTP tests, and events.</p>
+      </div>
+      <div class="label">Article visual</div>
+    </a>
+  </div>
+
+  <footer class="footer-links" aria-label="Related links">
+    <span class="footer-label">Related</span>
+    <a href="../dashboard/dashboard.html">Open Dashboard</a>
+    <a href="../README.md">Repo README</a>
+    <a href="../DATA_MODEL.md">Data Model Markdown</a>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Peloton Organized Data</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fafaf7;
+    --surface: #ffffff;
+    --ink: #0f1417;
+    --ink-2: #3d4348;
+    --ink-3: #6c7177;
+    --ink-4: #a3a8ad;
+    --line: #e7e4dd;
+    --line-strong: #d6d2c9;
+    --accent: #d24417;
+    --accent-soft: #f7e2d8;
+    --volume: #1f4d4a;
+    --volume-soft: #d8e6e4;
+    --gold: #b88a2e;
+    --gold-soft: #f5edda;
+    --serif: 'Fraunces', Georgia, serif;
+    --sans: 'Inter', -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { background: var(--bg); }
+  body {
+    font-family: var(--sans);
+    color: var(--ink);
+    width: 680px;
+    margin: 0 auto;
+    padding: 1rem 2rem 1rem;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+
+  /* Header */
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--ink-3);
+    text-align: center;
+    margin-bottom: 0.35rem;
+  }
+  h1 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 1.6rem;
+    text-align: center;
+    color: var(--ink);
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+  h1 em { color: var(--accent); font-style: normal; }
+  .subtitle {
+    font-size: 0.82rem;
+    color: var(--ink-3);
+    text-align: center;
+    margin-bottom: 0.85rem;
+  }
+
+  /* Section dividers */
+  .section-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.4rem;
+  }
+  .section-marker {
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    white-space: nowrap;
+  }
+  .section-marker.vol { color: var(--volume); }
+  .section-marker.perf { color: var(--accent); }
+  .section-line {
+    flex: 1;
+    height: 1px;
+  }
+  .section-line.vol { background: var(--volume-soft); }
+  .section-line.perf { background: var(--accent-soft); }
+
+  /* Cards */
+  .cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 0.7rem 0.9rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px;
+    height: 100%;
+  }
+  .card.vol::before { background: var(--volume); }
+  .card.perf::before { background: var(--accent); }
+
+  .card-name {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 0.88rem;
+    color: var(--ink);
+    margin-bottom: 0.2rem;
+  }
+  .card-desc {
+    font-size: 0.72rem;
+    color: var(--ink-3);
+    line-height: 1.5;
+    margin-bottom: 0.3rem;
+  }
+  .card-example {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    padding: 0.25rem 0.55rem;
+    border-radius: 6px;
+    display: inline-block;
+  }
+  .card.vol .card-example {
+    color: var(--volume);
+    background: var(--volume-soft);
+  }
+  .card.perf .card-example {
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  /* Footer bar */
+  .footer-connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 0 0.4rem;
+  }
+  .footer-line {
+    width: 1.5px;
+    height: 16px;
+    background: var(--ink-4);
+  }
+  .footer-arrow {
+    width: 0; height: 0;
+    border-left: 4.5px solid transparent;
+    border-right: 4.5px solid transparent;
+    border-top: 5.5px solid var(--ink-4);
+  }
+  .output-bar {
+    background: var(--ink);
+    color: #fff;
+    text-align: center;
+    padding: 0.55rem 1.25rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+  }
+  .output-file {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+  }
+  .output-sep {
+    color: #555;
+    font-size: 0.8rem;
+  }
+  .output-desc {
+    font-size: 0.72rem;
+    color: #9a9da2;
+  }
+</style>
+</head>
+<body>
+
+<div id="capture-zone" style="padding: 0.75rem;"><div class="eyebrow">Data Model</div>
+<h1>What the <em>organized</em> data looks like.</h1>
+<p class="subtitle">All of this is stored in one JSON file. The dashboard includes a copy of the data &mdash; no server, no database needed.</p>
+
+<!-- VOLUME -->
+<div class="section-bar">
+  <span class="section-marker vol">01 &middot; Volume</span>
+  <div class="section-line vol"></div>
+  <span class="section-marker vol">All workouts</span>
+</div>
+<div class="cards">
+  <div class="card vol">
+    <div class="card-name">Headline Stats</div>
+    <div class="card-desc">Total workouts, total hours, active days, consecutive active weeks, miles, calories</div>
+    <div class="card-example">2,964 workouts &middot; 2,630 hrs &middot; 384 weeks</div>
+  </div>
+  <div class="card vol">
+    <div class="card-name">Monthly Volume</div>
+    <div class="card-desc">Workouts, hours, miles, calories per month, split by Cycling / Strength / Other</div>
+    <div class="card-example">Mar 2018: 15 workouts, 11.6 hrs</div>
+  </div>
+  <div class="card vol">
+    <div class="card-name">Heatmap</div>
+    <div class="card-desc">One entry per active day with workout count and effort tier (1&ndash;5)</div>
+    <div class="card-example">2018-03-28: 2 workouts, tier 3</div>
+  </div>
+  <div class="card vol">
+    <div class="card-name">Instructors</div>
+    <div class="card-desc">Workout count per instructor across all disciplines</div>
+    <div class="card-example">Matt Wilpers: 3,206</div>
+  </div>
+</div>
+
+<!-- PERFORMANCE -->
+<div class="section-bar">
+  <span class="section-marker perf">02 &middot; Performance</span>
+  <div class="section-line perf"></div>
+  <span class="section-marker perf">Power Zone + FTP only</span>
+</div>
+<div class="cards">
+  <div class="card perf">
+    <div class="card-name">Performance Series</div>
+    <div class="card-desc">Grouped by ride type + duration. Each group has scatter points, monthly median, and 90-day rolling median.</div>
+    <div class="card-example">PZ Endurance 60 min: 140 rides</div>
+  </div>
+  <div class="card perf">
+    <div class="card-name">Annual Summary</div>
+    <div class="card-desc">Year-level stats per ride type + duration: average, 75th percentile, 90th percentile, max watts</div>
+    <div class="card-example">2021 PZ Std 60 min: avg 269W, max 292W</div>
+  </div>
+  <div class="card perf">
+    <div class="card-name">FTP Tests</div>
+    <div class="card-desc">Each all-out 20-min assessment as a date + watts data point (13 tests over 8 years)</div>
+    <div class="card-example">2020-12-05: 363W</div>
+  </div>
+  <div class="card perf">
+    <div class="card-name">Events</div>
+    <div class="card-desc">Hand-authored markers for context (COVID, equipment changes) shown on charts</div>
+    <div class="card-example">2022-03-01: New bike (calibration)</div>
+  </div>
+</div>
+
+<!-- OUTPUT -->
+<div class="footer-connector">
+  <div class="footer-line"></div>
+  <div class="footer-arrow"></div>
+</div>
+<div class="output-bar">
+  <span class="output-file">dashboard_data.json</span>
+  <span class="output-sep">&rarr;</span>
+  <span class="output-desc">incorporated into dashboard.html &mdash; no server needed</span>
+</div>
+</div>
+
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<script>
+function exportPNG() {
+  const btn = document.getElementById('exportBtn');
+  const zone = document.getElementById('capture-zone');
+  btn.style.display = 'none';
+  html2canvas(zone, { scale: 2, backgroundColor: '#fafaf7', useCORS: true }).then(canvas => {
+    btn.style.display = '';
+    const a = document.createElement('a');
+    a.download = 'peloton-organized-data.png';
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  });
+}
+</script>
+<div style="position: fixed; top: 12px; right: 12px;">
+  <button id="exportBtn" onclick="exportPNG()" style="font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; background: var(--ink); color: #fff; border: none; border-radius: 8px; padding: 0.5rem 0.9rem; cursor: pointer;">Export PNG</button>
+</div>
+</body>
+</html>

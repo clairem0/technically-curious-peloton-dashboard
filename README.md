@@ -28,11 +28,11 @@ high-hour months do not get mistaken for stronger riding months.
 
 | Article step | This repo | Why it exists |
 |---|---|---|
-| **Gather** | `raw_data/peloton_workouts.csv` | A scrubbed Peloton CSV export with 4,474 rows. |
+| **Gather** | `raw_data/peloton_workouts.csv` | A scrubbed Peloton CSV export with 4,490 rows. |
 | **Organize** | `organized/organize.py` | Classifies rides, computes monthly volume, builds rolling medians, and writes clean JSON. |
 | **Data model** | `DATA_MODEL.md` | Documents the entities, schema, and calculation boundaries so numbers can be traced. |
 | **Visualize** | `dashboard/dashboard.html` | Reads the generated JSON and renders the finished dashboard with Chart.js. |
-| **Share** | `index.html` + GitHub Pages | Makes the static dashboard viewable at a URL without adding an app backend. |
+| **Share** | `index.html`, `docs/` + GitHub Pages | Makes the static dashboard and companion docs viewable at URLs without adding an app backend. |
 
 All calculations belong in `organized/organize.py`. The HTML should mostly
 position charts, render tooltips, and handle display behavior. If a number is
@@ -46,6 +46,12 @@ peloton-dashboard/
 ├── DESIGN-SPEC.md              ← product/design spec and metric guardrails
 ├── DATA_MODEL.md                ← ERD + JSON schema reference
 ├── index.html                   ← redirects GitHub Pages to the dashboard
+├── docs/                        ← companion explainer pages and article visuals
+│   ├── index.html               ← docs landing page
+│   ├── data-model-explainer.html
+│   └── visuals/
+│       ├── data-flow.html
+│       └── organized-data-schema.html
 ├── raw_data/
 │   ├── peloton_workouts.csv     ← scrubbed Peloton export, tracked in git
 │   └── scrub.py                 ← genericizes a fresh export before commit
@@ -231,10 +237,20 @@ This repo is in the static-dashboard tier from the article:
 - **Email / local file:** send or open `dashboard/dashboard.html`.
 - **PNG export:** use the dashboard button when someone needs a snapshot for a deck.
 - **GitHub Pages:** use `index.html` to serve the dashboard from a clean URL.
+  The companion docs live under `docs/`.
+
+For GitHub Pages, configure the repository to publish from `main` / root. With
+that setting, the dashboard resolves from the repository homepage and the docs
+resolve from `/docs/`:
+
+```text
+https://<github-user>.github.io/technically-curious-peloton-dashboard/
+https://<github-user>.github.io/technically-curious-peloton-dashboard/docs/
+```
 
 Static hosting is enough because the data is personal, single-user, and updated
 manually. If you publish this repo or host it publicly, assume anything baked
-into `dashboard/dashboard.html` is public.
+into `dashboard/dashboard.html` or `docs/` is public.
 
 ## When to graduate from JSON
 
@@ -260,4 +276,5 @@ static HTML + JSON approach is intentionally enough.
 
 - [DESIGN-SPEC.md](./DESIGN-SPEC.md) — product/design spec and metric guardrails
 - [DATA_MODEL.md](./DATA_MODEL.md) — schema reference and calculation map
+- [docs/](./docs/) — companion explainer pages and article visuals
 - [Technically Curious](https://technicallycurious.substack.com/) — practical AI workflows for people past basic prompting

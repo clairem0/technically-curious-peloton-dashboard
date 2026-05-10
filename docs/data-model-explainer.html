@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Peloton Data Model Explainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fafaf7;
+    --surface: #ffffff;
+    --ink: #0f1417;
+    --ink-2: #3d4348;
+    --ink-3: #6c7177;
+    --ink-4: #a3a8ad;
+    --line: #e7e4dd;
+    --line-strong: #d6d2c9;
+    --accent: #d24417;
+    --accent-soft: #f7e2d8;
+    --volume: #1f4d4a;
+    --volume-soft: #d8e6e4;
+    --perf: #b35516;
+    --perf-soft: #fdf0eb;
+    --warmup: #888;
+    --warmup-soft: #efeee9;
+    --json-bg: #f8f7f4;
+    --gold: #b88a2e;
+    --serif: 'Fraunces', Georgia, serif;
+    --sans: 'Inter', -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { background: var(--bg); }
+  body {
+    font-family: var(--sans);
+    color: var(--ink);
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 3rem 2rem 5rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1 { font-family: var(--serif); font-size: 2rem; font-weight: 500; margin-bottom: 0.5rem; letter-spacing: -0.01em; }
+  h1 em { color: var(--accent); font-style: normal; }
+  .subtitle { color: var(--ink-3); font-size: 1rem; margin-bottom: 3rem; }
+
+  /* Steps */
+  .step { margin-bottom: 3.5rem; }
+  .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: #fff;
+    font-family: var(--sans);
+    font-size: 0.78rem;
+    font-weight: 700;
+    margin-right: 0.6rem;
+    vertical-align: middle;
+  }
+  .step h2 {
+    font-family: var(--serif);
+    font-size: 1.3rem;
+    font-weight: 500;
+    margin-bottom: 0.6rem;
+    display: inline;
+    vertical-align: middle;
+  }
+  .step-header { margin-bottom: 0.6rem; }
+  .step .prose {
+    color: var(--ink-2);
+    font-size: 0.95rem;
+    margin-bottom: 1.25rem;
+    max-width: 52rem;
+    line-height: 1.65;
+  }
+
+  /* Cards */
+  .card {
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 1.15rem 1.25rem;
+    background: var(--surface);
+  }
+  .card h4 {
+    font-family: var(--serif);
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  /* Tags */
+  .tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    font-weight: 600;
+    padding: 0.18rem 0.55rem;
+    border-radius: 999px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    vertical-align: middle;
+  }
+  .tag-volume { background: var(--volume-soft); color: var(--volume); }
+  .tag-perf { background: var(--perf-soft); color: var(--perf); }
+  .tag-warmup { background: var(--warmup-soft); color: var(--warmup); }
+
+  /* Tables */
+  .data-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+  }
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  .data-table th {
+    background: #f5f4f0;
+    font-weight: 600;
+    text-align: left;
+    padding: 0.55rem 0.65rem;
+    border-bottom: 2px solid var(--line);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .data-table td {
+    padding: 0.45rem 0.65rem;
+    border-bottom: 1px solid #eae8e3;
+    color: var(--ink-2);
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table .dim { color: #bbb; }
+  .data-table .highlight-row td { background: #fdf5ef; }
+
+  /* Grids */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+  @media (max-width: 750px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+
+  /* Callout boxes */
+  .callout {
+    background: #fffcf5;
+    border-left: 3px solid var(--gold);
+    border-radius: 0 12px 12px 0;
+    padding: 0.9rem 1.15rem;
+    margin-top: 1rem;
+    font-size: 0.88rem;
+    color: var(--ink-2);
+  }
+  .callout strong { color: var(--ink); }
+
+  /* Example lines */
+  .ex-line {
+    font-size: 0.82rem;
+    color: var(--ink-2);
+    padding: 0.3rem 0;
+    border-bottom: 1px solid #f3f2ee;
+    line-height: 1.5;
+  }
+  .ex-line:last-child { border-bottom: none; }
+  .ex-label {
+    font-family: var(--sans);
+    font-size: 0.78rem;
+    color: var(--ink-3);
+  }
+  .ex-result {
+    font-weight: 600;
+    font-size: 0.78rem;
+  }
+
+  /* JSON display */
+  .json-block {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--ink-2);
+    line-height: 1.7;
+    white-space: pre;
+    overflow-x: auto;
+    background: var(--json-bg);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--line);
+  }
+
+  /* Flow connector */
+  .flow-down {
+    display: flex;
+    justify-content: center;
+    padding: 0.75rem 0;
+  }
+  .flow-down svg { display: block; }
+
+  /* Output example chip */
+  .out-example {
+    font-family: var(--sans);
+    font-size: 0.76rem;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    display: inline-block;
+    margin-top: 0.15rem;
+  }
+
+  /* Track headers */
+  .track-header {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.15rem;
+  }
+  .track-scope {
+    font-size: 0.8rem;
+    color: var(--ink-3);
+    margin-bottom: 0.75rem;
+  }
+  .track-card {
+    border-width: 2px;
+  }
+
+  /* Sub-step labels */
+  .substep {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-2);
+    margin-bottom: 0.3rem;
+    margin-top: 1.5rem;
+  }
+  .substep:first-child { margin-top: 0; }
+</style>
+</head>
+<body>
+
+<h1>How the Peloton data model works.</h1>
+<p class="subtitle">The pipeline from raw CSV to finished dashboard, explained step by step with real data.</p>
+
+
+<!-- ============================================================ -->
+<!-- STEP 1 -->
+<!-- ============================================================ -->
+<div class="step">
+  <div class="step-header">
+    <span class="step-num">1</span>
+    <h2>Read the CSV</h2>
+  </div>
+  <p class="prose">The organize.py script opens <code>peloton_workouts.csv</code>. It has 4,490 rows. Each row is one workout Peloton recorded -- a ride, a strength class, a warm up. Here are 8 real rows:</p>
+
+  <div class="data-table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Title</th>
+          <th>Type</th>
+          <th>Discipline</th>
+          <th>Length</th>
+          <th>Watts</th>
+          <th>Instructor</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>2018-03-16</td>
+          <td>5 min Training Program Warm Up</td>
+          <td>Warm Up</td>
+          <td>Cycling</td>
+          <td>5</td>
+          <td>152</td>
+          <td>Matt Wilpers</td>
+        </tr>
+        <tr class="highlight-row">
+          <td>2018-03-16</td>
+          <td>45 min Power Zone Endurance Ride</td>
+          <td>Power Zone</td>
+          <td>Cycling</td>
+          <td>45</td>
+          <td>209</td>
+          <td>Matt Wilpers</td>
+        </tr>
+        <tr>
+          <td>2018-03-21</td>
+          <td>10 min Warm Up Ride</td>
+          <td>Warm Up</td>
+          <td>Cycling</td>
+          <td>10</td>
+          <td>169</td>
+          <td>Ally Love</td>
+        </tr>
+        <tr>
+          <td>2018-03-21</td>
+          <td>45 min Metrics Ride</td>
+          <td>Music</td>
+          <td>Cycling</td>
+          <td>45</td>
+          <td>217</td>
+          <td>Jenn Sherman</td>
+        </tr>
+        <tr class="highlight-row">
+          <td>2018-03-25</td>
+          <td>60 min Power Zone Endurance Ride</td>
+          <td>Power Zone</td>
+          <td>Cycling</td>
+          <td>60</td>
+          <td>223</td>
+          <td>Matt Wilpers</td>
+        </tr>
+        <tr>
+          <td>2018-03-27</td>
+          <td>45 min Tabata Ride</td>
+          <td>Intervals</td>
+          <td>Cycling</td>
+          <td>45</td>
+          <td>202</td>
+          <td>Robin Arzon</td>
+        </tr>
+        <tr>
+          <td>2018-03-28</td>
+          <td>5 min Cool Down Ride</td>
+          <td>Cool Down</td>
+          <td>Cycling</td>
+          <td>5</td>
+          <td>177</td>
+          <td>Christine D'Ercole</td>
+        </tr>
+        <tr class="highlight-row">
+          <td>2018-04-06</td>
+          <td>45 min Power Zone Ride</td>
+          <td>Power Zone</td>
+          <td>Cycling</td>
+          <td>45</td>
+          <td>196</td>
+          <td>Matt Wilpers</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="prose" style="margin-top: 0.75rem; font-size: 0.85rem; color: var(--ink-3);">The CSV has 17 columns total (full names: Workout Timestamp, Title, Type, Fitness Discipline, Length (minutes), Avg. Watts, Instructor Name). These 7 are the ones that matter for what comes next. The highlighted rows are Power Zone rides -- they'll appear in both analysis tracks.</p>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- STEP 2 -->
+<!-- ============================================================ -->
+<div class="step">
+  <div class="step-header">
+    <span class="step-num">2</span>
+    <h2>Classify every row</h2>
+  </div>
+  <p class="prose">The script loops through every row and asks three questions. The answers determine where each row's data ends up.</p>
+
+  <div class="grid-3">
+    <!-- Q1 -->
+    <div class="card">
+      <h4>Is it ancillary?</h4>
+      <p style="font-size: 0.82rem; color: var(--ink-2); margin-bottom: 0.6rem;">Checks the <strong>Type</strong> column. If it's "Warm Up" or "Cool Down", the row is ancillary.</p>
+      <div class="ex-line">
+        <div class="ex-label">Type: "Cool Down"</div>
+        <div class="ex-result" style="color: var(--warmup);">Ancillary -- excluded from workout counts</div>
+      </div>
+      <div class="ex-line">
+        <div class="ex-label">Type: "Warm Up"</div>
+        <div class="ex-result" style="color: var(--warmup);">Ancillary -- but time still counts toward hours</div>
+      </div>
+      <div class="ex-line">
+        <div class="ex-label">Type: "Intervals"</div>
+        <div class="ex-result" style="color: var(--volume);">Not ancillary -- this is a core workout</div>
+      </div>
+      <div style="margin-top: 0.6rem; font-size: 0.82rem; color: var(--ink-3);">1,526 rows are ancillary. The remaining <strong style="color: var(--ink);">2,964</strong> are core workouts.</div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="card">
+      <h4>What discipline bucket?</h4>
+      <p style="font-size: 0.82rem; color: var(--ink-2); margin-bottom: 0.6rem;">Checks the <strong>Fitness Discipline</strong> column and maps it to one of three buckets.</p>
+      <div class="ex-line">
+        <div class="ex-label">Fitness Discipline: "Cycling"</div>
+        <div class="ex-result" style="color: var(--volume);">Cycling</div>
+      </div>
+      <div class="ex-line">
+        <div class="ex-label">Fitness Discipline: "Strength"</div>
+        <div class="ex-result" style="color: var(--volume);">Strength</div>
+      </div>
+      <div class="ex-line">
+        <div class="ex-label">Fitness Discipline: "Stretching"</div>
+        <div class="ex-result" style="color: var(--volume);">Other</div>
+      </div>
+      <div style="margin-top: 0.6rem; font-size: 0.82rem; color: var(--ink-3);">Running, Yoga, Meditation, etc. all become "Other."</div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="card">
+      <h4>Is it a performance ride?</h4>
+      <p style="font-size: 0.82rem; color: var(--ink-2); margin-bottom: 0.6rem;">Checks the <strong>Title</strong> for Power Zone or FTP keywords. Also requires nonzero <strong>Avg. Watts</strong>.</p>
+      <div class="ex-line">
+        <div class="ex-label">"60 min Power Zone Endurance Ride"</div>
+        <div class="ex-result" style="color: var(--perf);">PZ Endurance, 60 min bucket</div>
+      </div>
+      <div class="ex-line">
+        <div class="ex-label">"45 min Power Zone Ride"</div>
+        <div class="ex-result" style="color: var(--perf);">PZ Standard, 45 min bucket</div>
+      </div>
+      <div class="ex-line">
+        <div class="ex-label">"45 min Tabata Ride"</div>
+        <div class="ex-result" style="color: var(--ink-3);">No -- not a Power Zone format</div>
+      </div>
+      <div style="margin-top: 0.6rem; font-size: 0.82rem; color: var(--ink-3);">Only <strong style="color: var(--ink);">1,474</strong> rows qualify as performance rides.</div>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top: 1.25rem;">
+    <strong>After classification, each row feeds into one or both of the next two steps.</strong> A Power Zone ride goes into both volume (step 3) and performance (step 4). A Tabata ride goes into volume only. A warm up contributes time to volume but doesn't count as a workout.
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- STEP 3 -->
+<!-- ============================================================ -->
+<div class="step">
+  <div class="step-header">
+    <span class="step-num">3</span>
+    <h2>Build the volume outputs</h2>
+  </div>
+  <p class="prose">The script groups <strong>all</strong> rows by month and calculates totals. These numbers cover everything -- cycling, strength, other. This is the "how much did you train?" track.</p>
+
+  <div class="grid-2">
+    <div class="card" style="border-color: var(--volume);">
+      <h4 style="color: var(--volume);">Monthly volume</h4>
+      <p style="font-size: 0.82rem; color: var(--ink-2); margin-bottom: 0.5rem;">For each month: total workouts (core only), total hours (all rows including ancillary), miles, calories, and hours split by discipline.</p>
+      <div class="out-example">Mar 2018: 15 workouts, 11.6 hrs, 250 mi</div>
+    </div>
+    <div class="card" style="border-color: var(--volume);">
+      <h4 style="color: var(--volume);">Heatmap</h4>
+      <p style="font-size: 0.82rem; color: var(--ink-2); margin-bottom: 0.5rem;">One entry per day with an effort tier (1-5) based on estimated calories that day. Covers all disciplines, not just cycling.</p>
+      <div class="out-example">2018-03-28: 2 workouts, 980 cal, tier 3</div>
+    </div>
+    <div class="card" style="border-color: var(--volume);">
+      <h4 style="color: var(--volume);">Headline stats</h4>
+      <p style="font-size: 0.82rem; color: var(--ink-2); margin-bottom: 0.5rem;">Totals and streaks across the full history: total workouts, total hours, active days, consecutive active weeks.</p>
+      <div class="out-example">2,964 core workouts &middot; 2,630 hours &middot; 384 consecutive weeks</div>
+    </div>
+    <div class="card" style="border-color: var(--volume);">
+      <h4 style="color: var(--volume);">Instructors</h4>
+      <p style="font-size: 0.82rem; color: var(--ink-2); margin-bottom: 0.5rem;">Workout count per instructor across all disciplines.</p>
+      <div class="out-example">Matt Wilpers: 3,206 &middot; Ben Alldis: 338</div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>What counts here?</strong> Warmups and cooldowns add to <em>hours</em> and <em>effort</em> but don't count as workouts or active days. A 5-min warm up shouldn't inflate your workout count.
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- STEP 4 -->
+<!-- ============================================================ -->
+<div class="step">
+  <div class="step-header">
+    <span class="step-num">4</span>
+    <h2>Build the performance outputs</h2>
+  </div>
+  <p class="prose">The script takes <strong>only</strong> the 1,474 performance rides and builds a separate set of outputs. This is the "am I getting stronger?" track. The key design choice: it only compares like with like.</p>
+
+  <div class="substep">4a. Group by ride type + duration</div>
+  <p class="prose">Each performance ride gets placed into a cohort based on its ride type and how long it was. A 60-min PZ Endurance ride is a completely different effort than a 45-min PZ Max, so they're never mixed together.</p>
+
+  <div class="data-table-wrap" style="max-width: 700px;">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Ride Type</th>
+          <th>Duration Buckets</th>
+          <th>What's being compared</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>PZ Endurance</strong></td>
+          <td>60 min, 75 min, 90 min, 120 min</td>
+          <td>Long steady-state rides</td>
+        </tr>
+        <tr>
+          <td><strong>PZ Standard</strong></td>
+          <td>45 min, 60 min</td>
+          <td>Mixed-zone interval rides</td>
+        </tr>
+        <tr>
+          <td><strong>PZ Max</strong></td>
+          <td>20 min, 45 min</td>
+          <td>High-intensity short efforts</td>
+        </tr>
+        <tr>
+          <td><strong>FTP Test</strong></td>
+          <td>20 min</td>
+          <td>All-out assessment efforts</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="substep">4b. For each cohort, calculate three views of the data</div>
+  <p class="prose">Each ride type + duration combination gets its own set of trend data. Here's what the script produces for each one, using "PZ Endurance / 60 min" as the example:</p>
+
+  <div class="grid-3">
+    <div class="card" style="border-color: var(--perf);">
+      <h4 style="color: var(--perf);">Scatter</h4>
+      <p style="font-size: 0.82rem; color: var(--ink-2); margin-bottom: 0.5rem;">Every ride as a single data point: date + average watts. This is the raw data the dashboard plots as dots.</p>
+      <div class="out-example">2018-03-25: 223W</div>
+      <div class="out-example">2020-12-02: 256W</div>
+      <div class="out-example">2026-05-05: 248W</div>
+      <div style="font-size: 0.78rem; color: var(--ink-3); margin-top: 0.5rem;">140 rides in this cohort</div>
+    </div>
+    <div class="card" style="border-color: var(--perf);">
+      <h4 style="color: var(--perf);">Rolling median</h4>
+      <p style="font-size: 0.82rem; color: var(--ink-2); margin-bottom: 0.5rem;">A 90-day rolling median of watts. Smooths out day-to-day variation to show the real trend. Only calculated when there are 3+ rides in the trailing 90-day window.</p>
+      <div class="out-example">2020-12-22: 257.5W median (14 rides in window)</div>
+    </div>
+    <div class="card" style="border-color: var(--perf);">
+      <h4 style="color: var(--perf);">Annual summary</h4>
+      <p style="font-size: 0.82rem; color: var(--ink-2); margin-bottom: 0.5rem;">Year-level stats: average, 75th percentile, 90th percentile, and max watts. Good for comparing year over year.</p>
+      <div class="out-example">2021: avg 269W, p75 281W, max 292W</div>
+    </div>
+  </div>
+
+  <div class="substep">4c. Pull out FTP tests separately</div>
+  <p class="prose">FTP tests are 20-minute all-out efforts that serve as fitness benchmarks. The script pulls them into their own list so the dashboard can show them as discrete events (13 tests across 8 years).</p>
+  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+    <div class="out-example">2018-05-12: 254W</div>
+    <div class="out-example">2020-12-05: 363W</div>
+    <div class="out-example">2026-05-10: 339W</div>
+  </div>
+
+  <div class="callout" style="margin-top: 1.25rem;">
+    <strong>Why only Power Zone rides?</strong> To compare watts fairly, you can only compare like with like. Mixing different ride formats would make the trend lines meaningless.
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- STEP 5 -->
+<!-- ============================================================ -->
+<div class="step">
+  <div class="step-header">
+    <span class="step-num">5</span>
+    <h2>Write the JSON</h2>
+  </div>
+  <p class="prose">organize.py writes everything from steps 3 and 4 to a single file: <code>dashboard_data.json</code>. The volume stuff goes in a <code>"volume"</code> section, the performance stuff in a <code>"performance"</code> section, plus headline stats and instructor counts at the top level.</p>
+
+  <div class="grid-2">
+    <div>
+      <div style="font-size: 0.78rem; font-weight: 600; color: var(--volume); margin-bottom: 0.4rem;">Volume section</div>
+      <div class="json-block">"volume": {
+  "monthly": [
+    {
+      "month": "2018-03",
+      "workouts": 15,
+      "hours": 11.6,
+      "hours_by_disc": {
+        "Cycling": 11.6,
+        "Strength": 0,
+        "Other": 0
+      }
+    },
+    ...
+  ],
+  "heatmap": [
+    { "date": "2018-03-25",
+      "count": 2, "tier": 4 },
+    ...
+  ]
+}</div>
+    </div>
+    <div>
+      <div style="font-size: 0.78rem; font-weight: 600; color: var(--perf); margin-bottom: 0.4rem;">Performance section</div>
+      <div class="json-block">"performance": {
+  "series": {
+    "PZ Endurance": {
+      "60 min": {
+        "scatter": [
+          { "date": "2018-03-25",
+            "watts": 223 },
+          ...
+        ],
+        "rolling_median": [
+          { "date": "2020-12-22",
+            "median": 257.5 },
+          ...
+        ]
+      }
+    }
+  },
+  "ftp_tests": [
+    { "date": "2020-12-05",
+      "watts": 363 },
+    ...
+  ]
+}</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- STEP 6 -->
+<!-- ============================================================ -->
+<div class="step">
+  <div class="step-header">
+    <span class="step-num">6</span>
+    <h2>The dashboard displays the data</h2>
+  </div>
+  <p class="prose">Once the dashboard design was finalized, we had AI incorporate the JSON data from <code>dashboard_data.json</code> directly into the dashboard HTML. The data lives inside the file itself as a JavaScript variable:</p>
+
+  <div class="json-block" style="max-width: 600px; margin-bottom: 1.25rem; white-space: pre-wrap;">const DATA = {
+  "headline": { ... },
+  "volume": { ... },
+  "performance": { ... }
+};</div>
+
+  <p class="prose">This means the dashboard is completely self-contained. You can send the HTML file to anyone and they can open it in a browser -- no server, no database, no external files needed.</p>
+
+  <div class="grid-2">
+    <div class="card">
+      <h4>Volume charts read from <code style="color: var(--volume);">"volume"</code></h4>
+      <p style="font-size: 0.82rem; color: var(--ink-2);">Monthly training hours (stacked by discipline), workout consistency heatmap, headline stats at the top.</p>
+    </div>
+    <div class="card">
+      <h4>Power charts read from <code style="color: var(--perf);">"performance"</code></h4>
+      <p style="font-size: 0.82rem; color: var(--ink-2);">Scatter + rolling median trend lines, filterable by ride type and duration. FTP test history as discrete dots.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>This is the core insight:</strong> the dashboard itself is simple. All the hard work -- classifying rides, deciding what counts, computing medians -- happens in the organize step. If a number on the dashboard looks wrong, you can ask AI to trace it back through the JSON to the script. The separation makes the whole thing auditable, even if you never look at the code yourself.
+  </div>
+</div>
+
+
+<!-- ============================================================ -->
+<!-- STEP 7 -->
+<!-- ============================================================ -->
+<div class="step">
+  <div class="step-header">
+    <span class="step-num">7</span>
+    <h2>Updating with new data</h2>
+  </div>
+  <p class="prose">When you have new data (say, a fresh export from Peloton), the update process is:</p>
+
+  <div class="grid-3" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: 1rem;">
+    <div class="card">
+      <h4>1. New export</h4>
+      <p style="font-size: 0.82rem; color: var(--ink-2);">Drop the new data file into your raw_data folder.</p>
+    </div>
+    <div class="card">
+      <h4>2. Re-run and inject</h4>
+      <p style="font-size: 0.82rem; color: var(--ink-2);">Ask AI to re-run the organize script and inject the new data into the dashboard.</p>
+    </div>
+    <div class="card">
+      <h4>3. Review</h4>
+      <p style="font-size: 0.82rem; color: var(--ink-2);">Open the updated dashboard and make sure everything looks right.</p>
+    </div>
+  </div>
+
+  <p class="prose">The dashboard design doesn't change -- only the data inside it gets refreshed. Because the organize script already has all your classification rules and calculations, the update is a few prompts, not a rebuild.</p>
+</div>
+
+
+</body>
+</html>

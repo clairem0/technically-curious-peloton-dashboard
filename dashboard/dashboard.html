@@ -280,30 +280,37 @@
     border-color: var(--ink);
   }
 
-  .heatmap-outer { display: flex; gap: 8px; }
+  .heatmap-outer {
+    --heatmap-cell-size: 11px;
+    --heatmap-gap: 2px;
+    --heatmap-month-label-height: 11px;
+    display: flex;
+    gap: 8px;
+  }
   .heatmap-day-labels {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--heatmap-gap);
+    margin-top: calc(var(--heatmap-month-label-height) + 6px);
     font-family: var(--mono);
     font-size: 0.65rem;
     color: var(--ink-4);
     align-items: flex-end;
   }
   .heatmap-day-labels .day {
-    height: 11px;
-    line-height: 11px;
+    height: var(--heatmap-cell-size);
+    line-height: var(--heatmap-cell-size);
   }
   .heatmap-scroll {
     overflow-x: auto;
     flex: 1;
     padding-bottom: 0.25rem;
   }
-  .heatmap { display: flex; gap: 2px; min-width: max-content; }
-  .heatmap-week { display: flex; flex-direction: column; gap: 2px; }
+  .heatmap { display: flex; gap: var(--heatmap-gap); min-width: max-content; }
+  .heatmap-week { display: flex; flex-direction: column; gap: var(--heatmap-gap); }
   .heatmap-cell {
-    width: 11px;
-    height: 11px;
+    width: var(--heatmap-cell-size);
+    height: var(--heatmap-cell-size);
     border-radius: 2px;
     background: var(--bg);
   }
@@ -323,8 +330,10 @@
   }
   .heatmap-month-labels {
     display: grid;
+    height: var(--heatmap-month-label-height);
+    line-height: var(--heatmap-month-label-height);
     margin-bottom: 6px;
-    gap: 2px;
+    gap: var(--heatmap-gap);
     min-width: max-content;
     font-family: var(--mono);
     font-size: 0.58rem;
@@ -665,7 +674,7 @@
 <div id="capture-zone"><div class="masthead">
   <div class="eyebrow">Personal Training Dashboard · Peloton export · <a href="https://technicallycurious.substack.com/">Technically Curious</a></div>
   <h1><em>Peloton</em> training dashboard.</h1>
-  <p class="lede">Workout history from February 2018 through May 2026, organized into volume, consistency, and comparable power metrics.</p>
+  <p class="lede">Workout history from February 2018 through <span id="dataThroughLabel">the latest export</span>, organized into volume, consistency, and comparable power metrics.</p>
 </div>
 
 <div class="headline">
@@ -825,6 +834,37 @@ const VOLUME = '#1f4d4a';
 
 function fmt(n) { return n.toLocaleString(); }
 
+function parseDateUTC(dateStr) {
+  var parts = dateStr.split('-').map(Number);
+  return new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+}
+
+function latestHeatmapDate() {
+  var dates = DATA.volume.heatmap.map(function(d) { return d.date; }).sort();
+  return dates.length ? dates[dates.length - 1] : null;
+}
+
+function formatDateLong(dateStr) {
+  var date = parseDateUTC(dateStr);
+  return date.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC'
+  });
+}
+
+function setDataThroughCopy() {
+  var latest = latestHeatmapDate();
+  if (!latest) return;
+
+  var through = formatDateLong(latest);
+  var dataThroughLabel = document.getElementById('dataThroughLabel');
+  if (dataThroughLabel) {
+    dataThroughLabel.textContent = through;
+  }
+}
+
 function commonXAxis(extra) {
   return Object.assign({
     grid: { display: false, drawBorder: false },
@@ -848,6 +888,8 @@ function commonYAxis(extra) {
 }
 
 // ── HEADLINE ──
+setDataThroughCopy();
+
 (function() {
   var streakEl = document.getElementById('hl-streak');
   var em = document.createElement('em');
@@ -1156,9 +1198,11 @@ function buildPerfChart(rideType, bucket) {
   }
 
   var dates = DATA.volume.heatmap.map(function(d) { return d.date; }).sort();
-  var start = utcDate(dates[0] || '2018-02-25');
-  var end = utcDate(dates[dates.length - 1] || '2026-05-02');
+  var fallbackDate = dates[0] || '2018-02-25';
+  var start = utcDate(fallbackDate);
+  var end = utcDate(dates[dates.length - 1] || fallbackDate);
   var adjustedStart = new Date(start);
+  // Calendar columns run Sunday through Saturday.
   adjustedStart.setUTCDate(adjustedStart.getUTCDate() - adjustedStart.getUTCDay());
 
   var outer = document.createElement('div');
@@ -1166,8 +1210,19 @@ function buildPerfChart(rideType, bucket) {
 
   var dayLabels = document.createElement('div');
   dayLabels.className = 'heatmap-day-labels';
-  ['', 'M', '', 'W', '', 'F', ''].forEach(function(d) {
-    var el = document.createElement('div'); el.className = 'day'; el.textContent = d;
+  [
+    { label: 'S', title: 'Sunday' },
+    { label: 'M', title: 'Monday' },
+    { label: 'T', title: 'Tuesday' },
+    { label: 'W', title: 'Wednesday' },
+    { label: 'T', title: 'Thursday' },
+    { label: 'F', title: 'Friday' },
+    { label: 'S', title: 'Saturday' },
+  ].forEach(function(d) {
+    var el = document.createElement('div');
+    el.className = 'day';
+    el.textContent = d.label;
+    el.title = d.title;
     dayLabels.appendChild(el);
   });
   outer.appendChild(dayLabels);

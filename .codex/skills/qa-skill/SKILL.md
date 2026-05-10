@@ -27,13 +27,14 @@ Use this skill from the `peloton-dashboard` repo root.
    Derive the absolute repo path from `pwd`; do not hard-code a local username.
 
 4. Compare the visible UI to the script's `Expected visible totals`:
+   - data-through copy in the masthead
    - headline stats: active-week streak, core workouts, performance rides, training hours
    - volume cards: training hours, reported miles, estimated calories, core workouts, ancillary footnote
    - instructor counts, especially the top row
 
 5. Walk the interaction surface:
    - Volume controls switch between Hours, Workouts, Miles, and Calories without blank charts or console errors.
-   - Consistency heatmap renders and scrolls horizontally on narrow viewports.
+   - Consistency heatmap renders with Sunday-Saturday day labels aligned to rows and scrolls horizontally on narrow viewports.
    - Power trend controls show PZ Endurance, PZ Standard, PZ Max, and FTP Test.
    - Duration controls update for the selected ride type.
    - FTP Test shows discrete benchmark points rather than a rolling line.

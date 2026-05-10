@@ -109,6 +109,11 @@ def compact_calories(value: int) -> str:
     return f"{value / 1_000_000:.1f}M"
 
 
+def format_long_date(date_str: str) -> str:
+    date = datetime.strptime(date_str, "%Y-%m-%d")
+    return f"{date.strftime('%B')} {date.day}, {date.year}"
+
+
 def calculate_from_csv(rows: list[dict[str, str]]) -> dict[str, float | int]:
     core_rows = [row for row in rows if not is_ancillary(row)]
 
@@ -250,7 +255,9 @@ def main() -> int:
     if tracked_raw:
         failures.append("raw_data/workouts_raw.csv is tracked")
 
+    latest_heatmap_date = max(day["date"] for day in data["volume"]["heatmap"])
     visible = {
+        "data_through_label": format_long_date(latest_heatmap_date),
         "headline_active_weeks": display_int(data["headline"]["longest_week_streak"]),
         "headline_core_workouts": display_int(data["headline"]["total_workouts"]),
         "headline_performance_rides": display_int(data["headline"]["performance_rides"]),

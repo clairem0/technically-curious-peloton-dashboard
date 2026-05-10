@@ -106,6 +106,37 @@ with open('dashboard/dashboard.html', 'w') as f: f.write(new)
 open dashboard/dashboard.html
 ```
 
+### Refresh safety checklist
+
+Before committing a refreshed dashboard, verify the raw export stayed out of
+git and only scrubbed/generated files are staged.
+
+```bash
+# Raw Peloton export should be ignored, not tracked.
+git status --short --ignored=matching raw_data/workouts_raw.csv
+git ls-files raw_data/workouts_raw.csv
+
+# Scrubbed CSV should not contain export-only columns.
+head -n 1 raw_data/peloton_workouts.csv
+
+# Workout timestamps in the committed CSV should be date-only.
+awk -F, 'NR>1 && $1 ~ /[0-9]{2}:[0-9]{2}/ {print NR ":" $1; found=1; exit} END {if (!found) print "ok: date-only workout timestamps"}' raw_data/peloton_workouts.csv
+
+# Generated JSON should parse.
+python3 -c 'import json; json.load(open("organized/dashboard_data.json")); print("ok: dashboard_data.json parses")'
+```
+
+Expected results:
+
+- `git status --ignored` may show `!! raw_data/workouts_raw.csv`.
+- `git ls-files raw_data/workouts_raw.csv` should print nothing.
+- `head -n 1 raw_data/peloton_workouts.csv` should not include
+  `Class Timestamp`.
+- Never run `git add -f raw_data/workouts_raw.csv`.
+- Stage only the scrubbed CSV, generated JSON, and baked HTML for a data
+  refresh: `raw_data/peloton_workouts.csv`,
+  `organized/dashboard_data.json`, and `dashboard/dashboard.html`.
+
 ## Pipeline architecture
 
 ```

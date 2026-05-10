@@ -135,6 +135,9 @@ The scrubber should:
 Anything embedded in `dashboard/dashboard.html` should be considered public if
 the repo or GitHub Pages site is public.
 
+`.gitignore` is a guardrail, not a guarantee. Fresh raw exports must never be
+force-staged with `git add -f`; only the scrubbed CSV belongs in git.
+
 ## Data Pipeline
 
 The expected pipeline is:

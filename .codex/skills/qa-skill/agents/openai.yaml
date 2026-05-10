@@ -1,0 +1,3 @@
+display_name: Dashboard QA
+short_description: Verify Peloton dashboard data and UI totals.
+default_prompt: Run the Peloton dashboard QA checks and summarize any mismatches.

@@ -1,31 +1,31 @@
 {
   "headline": {
-    "total_workouts": 2955,
-    "total_workouts_raw": 4474,
-    "ancillary_workouts": 1519,
-    "performance_rides": 1468,
-    "total_hours": 2621.1,
-    "total_hours_core": 2278.4,
-    "total_hours_raw": 2621.1,
+    "total_workouts": 2964,
+    "total_workouts_raw": 4490,
+    "ancillary_workouts": 1526,
+    "performance_rides": 1474,
+    "total_hours": 2629.8,
+    "total_hours_core": 2285.8,
+    "total_hours_raw": 2629.8,
     "years_active": 8.2,
-    "longest_week_streak": 383,
-    "active_weeks": 427,
-    "active_week_span": 428,
+    "longest_week_streak": 384,
+    "active_weeks": 428,
+    "active_week_span": 429,
     "active_months": 100,
     "active_month_span": 100,
-    "active_days": 2350
+    "active_days": 2359
   },
   "volume": {
     "totals": {
-      "workouts": 2955,
-      "workouts_raw": 4474,
-      "ancillary_workouts": 1519,
-      "hours": 2621.1,
-      "hours_core": 2278.4,
-      "hours_raw": 2621.1,
-      "miles": 45563.2,
-      "calories": 2505886,
-      "around_world_x": 1.83
+      "workouts": 2964,
+      "workouts_raw": 4490,
+      "ancillary_workouts": 1526,
+      "hours": 2629.8,
+      "hours_core": 2285.8,
+      "hours_raw": 2629.8,
+      "miles": 45740.2,
+      "calories": 2515482,
+      "around_world_x": 1.84
     },
     "monthly": [
       {
@@ -1911,20 +1911,20 @@
       },
       {
         "month": "2026-05",
-        "workouts": 1,
-        "workouts_ancillary": 1,
-        "hours": 1.0,
-        "hours_ancillary": 0.2,
-        "miles": 22.9,
-        "calories": 1248,
+        "workouts": 10,
+        "workouts_ancillary": 8,
+        "hours": 9.8,
+        "hours_ancillary": 1.7,
+        "miles": 199.9,
+        "calories": 10844,
         "hours_by_disc": {
-          "Cycling": 1.0,
-          "Strength": 0.0,
+          "Cycling": 8.8,
+          "Strength": 1.0,
           "Other": 0.0
         },
         "workouts_by_disc": {
-          "Cycling": 1,
-          "Strength": 0,
+          "Cycling": 7,
+          "Strength": 3,
           "Other": 0
         }
       }
@@ -18428,6 +18428,69 @@
         "kj": 926,
         "calories": 1248,
         "tier": 4
+      },
+      {
+        "date": "2026-05-02",
+        "count": 1,
+        "kj": 1728,
+        "calories": 2328,
+        "tier": 5
+      },
+      {
+        "date": "2026-05-03",
+        "count": 1,
+        "kj": 0,
+        "calories": 101,
+        "tier": 2
+      },
+      {
+        "date": "2026-05-04",
+        "count": 1,
+        "kj": 938,
+        "calories": 1264,
+        "tier": 4
+      },
+      {
+        "date": "2026-05-05",
+        "count": 1,
+        "kj": 1096,
+        "calories": 1478,
+        "tier": 4
+      },
+      {
+        "date": "2026-05-06",
+        "count": 1,
+        "kj": 0,
+        "calories": 102,
+        "tier": 2
+      },
+      {
+        "date": "2026-05-07",
+        "count": 1,
+        "kj": 934,
+        "calories": 1259,
+        "tier": 4
+      },
+      {
+        "date": "2026-05-08",
+        "count": 1,
+        "kj": 1306,
+        "calories": 1760,
+        "tier": 5
+      },
+      {
+        "date": "2026-05-09",
+        "count": 1,
+        "kj": 0,
+        "calories": 100,
+        "tier": 2
+      },
+      {
+        "date": "2026-05-10",
+        "count": 1,
+        "kj": 893,
+        "calories": 1204,
+        "tier": 4
       }
     ]
   },
@@ -18435,7 +18498,7 @@
     "series": {
       "PZ Endurance": {
         "60 min": {
-          "total_rides": 139,
+          "total_rides": 140,
           "scatter": [
             {
               "date": "2018-02-25",
@@ -18992,6 +19055,10 @@
             {
               "date": "2026-04-28",
               "watts": 247.0
+            },
+            {
+              "date": "2026-05-05",
+              "watts": 248.0
             }
           ],
           "monthly_median": [
@@ -19816,6 +19883,11 @@
               "date": "2026-01-07",
               "rolling_median": 247.0,
               "sample_size": 5
+            },
+            {
+              "date": "2026-05-05",
+              "rolling_median": 247.0,
+              "sample_size": 3
             }
           ]
         },
@@ -19888,7 +19960,7 @@
           ]
         },
         "90 min": {
-          "total_rides": 231,
+          "total_rides": 232,
           "scatter": [
             {
               "date": "2018-11-04",
@@ -20813,6 +20885,10 @@
             {
               "date": "2026-04-15",
               "watts": 241.0
+            },
+            {
+              "date": "2026-05-08",
+              "watts": 242.0
             }
           ],
           "monthly_median": [
@@ -22282,6 +22358,11 @@
               "date": "2026-04-15",
               "rolling_median": 241.0,
               "sample_size": 7
+            },
+            {
+              "date": "2026-05-08",
+              "rolling_median": 241.0,
+              "sample_size": 8
             }
           ]
         },
@@ -24343,7 +24424,7 @@
           ]
         },
         "120 min": {
-          "total_rides": 72,
+          "total_rides": 73,
           "scatter": [
             {
               "date": "2023-11-05",
@@ -24632,6 +24713,10 @@
             {
               "date": "2026-04-25",
               "watts": 235.0
+            },
+            {
+              "date": "2026-05-02",
+              "watts": 240.0
             }
           ],
           "monthly_median": [
@@ -25101,13 +25186,18 @@
               "date": "2026-04-25",
               "rolling_median": 235.0,
               "sample_size": 12
+            },
+            {
+              "date": "2026-05-02",
+              "rolling_median": 235.0,
+              "sample_size": 13
             }
           ]
         }
       },
       "PZ Standard": {
         "45 min": {
-          "total_rides": 267,
+          "total_rides": 269,
           "scatter": [
             {
               "date": "2018-04-06",
@@ -26176,6 +26266,14 @@
             {
               "date": "2026-05-01",
               "watts": 269.0
+            },
+            {
+              "date": "2026-05-04",
+              "watts": 272.0
+            },
+            {
+              "date": "2026-05-07",
+              "watts": 262.0
             }
           ],
           "monthly_median": [
@@ -26538,6 +26636,11 @@
               "month": "2026-04",
               "median_watts": 266.5,
               "rides": 4
+            },
+            {
+              "month": "2026-05",
+              "median_watts": 269.0,
+              "rides": 3
             }
           ],
           "rolling_median": [
@@ -27850,6 +27953,16 @@
               "date": "2026-05-01",
               "rolling_median": 269.0,
               "sample_size": 11
+            },
+            {
+              "date": "2026-05-04",
+              "rolling_median": 269.0,
+              "sample_size": 12
+            },
+            {
+              "date": "2026-05-07",
+              "rolling_median": 269.0,
+              "sample_size": 13
             }
           ]
         },
@@ -32168,7 +32281,7 @@
       },
       "FTP Test": {
         "20 min": {
-          "total_rides": 12,
+          "total_rides": 13,
           "scatter": [
             {
               "date": "2018-05-12",
@@ -32217,6 +32330,10 @@
             {
               "date": "2023-12-03",
               "watts": 332.0
+            },
+            {
+              "date": "2026-05-10",
+              "watts": 339.0
             }
           ],
           "monthly_median": [],
@@ -33114,11 +33231,11 @@
           },
           {
             "year": "2026",
-            "rides": 3,
-            "avg": 244.3,
-            "p75": 246.0,
-            "p90": 246.6,
-            "max": 247.0
+            "rides": 4,
+            "avg": 245.2,
+            "p75": 247.2,
+            "p90": 247.7,
+            "max": 248.0
           }
         ],
         "45 min": [
@@ -33222,10 +33339,10 @@
           },
           {
             "year": "2026",
-            "rides": 7,
-            "avg": 239.6,
-            "p75": 241.0,
-            "p90": 241.8,
+            "rides": 8,
+            "avg": 239.9,
+            "p75": 241.2,
+            "p90": 242.3,
             "max": 243.0
           }
         ],
@@ -33322,11 +33439,11 @@
           },
           {
             "year": "2026",
-            "rides": 16,
-            "avg": 234.9,
+            "rides": 17,
+            "avg": 235.2,
             "p75": 237.0,
-            "p90": 238.0,
-            "max": 239.0
+            "p90": 238.4,
+            "max": 240.0
           }
         ]
       },
@@ -33398,10 +33515,10 @@
           },
           {
             "year": "2026",
-            "rides": 16,
+            "rides": 18,
             "avg": 267.0,
-            "p75": 271.2,
-            "p90": 273.5,
+            "p75": 271.8,
+            "p90": 273.3,
             "max": 275.0
           }
         ],
@@ -33513,6 +33630,14 @@
             "p75": 332.0,
             "p90": 332.0,
             "max": 332.0
+          },
+          {
+            "year": "2026",
+            "rides": 1,
+            "avg": 339.0,
+            "p75": 339.0,
+            "p90": 339.0,
+            "max": 339.0
           }
         ]
       },
@@ -33643,6 +33768,10 @@
       {
         "date": "2023-12-03",
         "watts": 332.0
+      },
+      {
+        "date": "2026-05-10",
+        "watts": 339.0
       }
     ],
     "ride_types": [
@@ -33666,15 +33795,15 @@
   "instructors": [
     {
       "name": "Matt Wilpers",
-      "count": 3196
+      "count": 3206
     },
     {
       "name": "Ben Alldis",
-      "count": 337
+      "count": 338
     },
     {
       "name": "Jess Sims",
-      "count": 267
+      "count": 268
     },
     {
       "name": "Rebecca Kennedy",
@@ -33694,7 +33823,7 @@
     },
     {
       "name": "Katie Wang",
-      "count": 52
+      "count": 53
     },
     {
       "name": "Hannah Corbin",

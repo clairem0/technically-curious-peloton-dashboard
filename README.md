@@ -43,6 +43,7 @@ wrong, debug the JSON before changing the visualization.
 ```
 peloton-dashboard/
 ├── README.md
+├── DESIGN-SPEC.md              ← product/design spec and metric guardrails
 ├── DATA_MODEL.md                ← ERD + JSON schema reference
 ├── index.html                   ← redirects GitHub Pages to the dashboard
 ├── raw_data/
@@ -226,5 +227,6 @@ static HTML + JSON approach is intentionally enough.
 
 ## See also
 
+- [DESIGN-SPEC.md](./DESIGN-SPEC.md) — product/design spec and metric guardrails
 - [DATA_MODEL.md](./DATA_MODEL.md) — schema reference and calculation map
 - [Technically Curious](https://technicallycurious.substack.com/) — practical AI workflows for people past basic prompting

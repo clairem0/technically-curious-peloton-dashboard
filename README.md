@@ -14,6 +14,11 @@ The important design choice: the dashboard is not a full app. There is no server
 login, or live database. It is a static HTML file with the data baked in, which is
 the right level of complexity for a personal, single-source dashboard.
 
+## Live pages
+
+- [Dashboard](https://clairem0.github.io/technically-curious-peloton-dashboard/)
+- [Companion docs](https://clairem0.github.io/technically-curious-peloton-dashboard/docs/)
+
 ## What this dashboard answers
 
 Two questions, kept intentionally separate:

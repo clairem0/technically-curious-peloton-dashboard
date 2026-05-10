@@ -46,6 +46,22 @@
   h1 { font-family: var(--serif); font-size: 2rem; font-weight: 500; margin-bottom: 0.5rem; letter-spacing: -0.01em; }
   h1 em { color: var(--accent); font-style: normal; }
   .subtitle { color: var(--ink-3); font-size: 1rem; margin-bottom: 3rem; }
+  .page-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+    margin-bottom: 1.75rem;
+  }
+  .page-links a {
+    color: var(--ink-3);
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+  .page-links a:hover { color: var(--accent); }
 
   /* Steps */
   .step { margin-bottom: 3.5rem; }
@@ -248,6 +264,11 @@
 </style>
 </head>
 <body>
+
+<nav class="page-links" aria-label="Page links">
+  <a href="index.html">Docs Index</a>
+  <a href="../dashboard/dashboard.html">Dashboard</a>
+</nav>
 
 <h1>How the Peloton data model works.</h1>
 <p class="subtitle">The pipeline from raw CSV to finished dashboard, explained step by step with real data.</p>

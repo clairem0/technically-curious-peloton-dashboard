@@ -60,6 +60,23 @@
     line-height: 1.2;
   }
   h1 em { color: var(--accent); font-style: normal; }
+  .page-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.6rem 0.9rem;
+    margin-bottom: 0.4rem;
+  }
+  .page-links a {
+    color: var(--ink-3);
+    font-family: var(--mono);
+    font-size: 0.56rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+  .page-links a:hover { color: var(--accent); }
   .subtitle {
     font-size: 0.82rem;
     color: var(--ink-3);
@@ -192,6 +209,11 @@
 </style>
 </head>
 <body>
+
+<nav class="page-links" aria-label="Page links">
+  <a href="../index.html">Docs Index</a>
+  <a href="../../dashboard/dashboard.html">Dashboard</a>
+</nav>
 
 <div id="capture-zone" style="padding: 0.75rem;"><div class="eyebrow">Data Model</div>
 <h1>What the <em>organized</em> data looks like.</h1>

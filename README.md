@@ -1,7 +1,7 @@
 # Peloton Dashboard
 
-A concrete companion example for the forthcoming Technically Curious article
-[Build a Dashboard with AI](https://technicallycurious.substack.com/).
+A concrete companion example for the Technically Curious article
+[Embrace Your New Dashboarding Superpowers](https://technicallycurious.substack.com/p/embrace-your-new-dashboarding-superpowers).
 
 This repo turns eight years of Peloton workout history into a self-contained HTML
 dashboard. It follows the article's core pattern:
